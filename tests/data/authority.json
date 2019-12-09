@@ -1,0 +1,12 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 3,
+        "data": {
+            "uid": 15,
+            "appid": 12345,
+            "authkey": "B6386A2485D94C73DAA"
+        }
+    }
+}
