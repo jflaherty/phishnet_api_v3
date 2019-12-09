@@ -1,0 +1,34 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 5,
+        "data": {
+            "1": {
+                "artistid": 1,
+                "name": "Phish",
+                "link": "http://phish.net/setlists/phish"
+            },
+            "2": {
+                "artistid": 2,
+                "name": "Trey Anastasio",
+                "link": "http://phish.net/setlists/trey"
+            },
+            "6": {
+                "artistid": 6,
+                "name": "Mike Gordon",
+                "link": "http://phish.net/setlists/mike"
+            },
+            "7": {
+                "artistid": 7,
+                "name": "Jon Fishman",
+                "link": "http://phish.net/setlists/fish"
+            },
+            "9": {
+                "artistid": 9,
+                "name": "Page McConnell",
+                "link": "http://phish.net/setlists/page"
+            }
+        }
+    }
+}

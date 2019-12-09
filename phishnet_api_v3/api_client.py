@@ -116,31 +116,7 @@ class PhishNetAPI(object):
     def get_recent_blogs(self):
         """
         Get a list of recently posted entries to the phish.net blog (last 15 entries).
-        :return: API response object of recent blog entries:
-            {
-                "error_code": 0,
-                "error_message": null,
-                "response": {
-                    "count": 15,
-                    "data": [
-                        {
-                            "pubdate": "2018-11-14 9:58 am",
-                            "title": "Fall Tour 2018 -- HF Pod Recap!",
-                            "url": "http://phish.net/blog/1542207505/fall-tour-2018-hf-pod-recap",
-                            "teaser": "<p><img  src=\"http://smedia.pnet-static.com/img/IMG_8193.jpg\" style=\"width: 500px; height: 375px;\" /></p>\r\n\r\n<p>Although it only lasted just over two weeks, this Fall Tour was a doozy. We have come to outlive our brains, maybe? We have plenty to talk about, including the Hampton Simple vs. Hampton Golden Age, the lyrical improvements of this tour, the secretive nature of the Kasvot Voxt set and Kuroda&#39;s continuing magic. </p>",
-                            "author": "swittersdc",
-                            "profile": "http://phish.net/user/swittersdc",
-                            "category": "Text",
-                            "shorturl": "http://phi.sh/b/5bec3811",
-                            "attachment": ""
-                        },
-                        {
-                            ...
-                        },
-                        ...
-                    ]
-                }
-            }
+        :return: json response object of recent blog entries - see tests/data/recent_blogs.json
         """
         return self.post(endpoint='blog/get')
 
@@ -154,12 +130,12 @@ class PhishNetAPI(object):
             monthname: month of the year (i.e. January)
             username: The username of the author
             author: the uid of the author
-        :return: API response object (see get_recent_blogs())
+        :return: json response object of blogs that match the query(see get_recent_blogs())
         """
-        params = kwargs.keys
+        params = kwargs.keys()
         legal_params = ['month', 'day', 'year', 'username', 'uid']
 
-        if not len(params.keys) > 0 and not set(params).issubset(set(legal_params)):
+        if not len(params) > 0 and not set(params).issubset(set(legal_params)):
             raise PhishNetAPIError(
                 'Invalid query params for blog/get, {}'.format(kwargs))
 
@@ -169,6 +145,35 @@ class PhishNetAPI(object):
                 raise PhishNetAPIError(
                     'Invalid monthname: {}'.format(kwargs['monthname']))
         return self.post(endpoint='blog/get', params=kwargs)
+
+    @check_api_key
+    def get_all_artists(self):
+        """
+        The artists/all endpoint returns an array of artists whose setlists are tracked 
+        in the Phish.net setlist database, along with the associated artistid.
+        :return: json response object of all artists - see tests/data/all_artists.json
+        """
+        return self.post(endpoint='artists/all')
+
+    @check_api_key
+    def get_show_attendees(self, **kwargs):
+        """
+        Find all attendees for a specific show
+        :param **kwargs. Made up of at least one of the the following keys:
+            showid: the id for a specific show
+            showdate: The date for a specific show
+        :return: json response object of attendees for a specific show
+        """
+        params = kwargs.keys()
+        legal_params = ['showid', 'showdate']
+
+        if not len(params) > 0 and not set(params).issubset(set(legal_params)):
+            raise PhishNetAPIError("show_id or show_date required")
+
+        if kwargs['showdate']:
+            kwargs['showdate'] = self.parse_date(kwargs['showdate'])
+
+        return self.post(endpoint='attendance/get', params=kwargs)
 
     @check_api_key
     def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
@@ -241,11 +246,11 @@ class PhishNetAPI(object):
     @staticmethod
     def parse_date(d):
         if isinstance(d, date):
-            return d
+            return str(d)
         else:
             try:
                 d = arrow.get(d).date()
             except arrow.parser.ParserError:
                 raise ValueError(
                     'Showdate {} could not be parsed into a date. Use YYYY-MM-DD format.'.format(d))
-            return d
+            return str(d)
