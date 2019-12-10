@@ -1,0 +1,13 @@
+{
+    "error_code": 0,
+    "error_message": "Successfully added 1997-11-30",
+    "response": {
+        "count": 4,
+        "data": {
+            "action": "add",
+            "showdate": "1997-11-30",
+            "showid": 1252691618,
+            "shows_seen": "63"
+        }
+    }
+}

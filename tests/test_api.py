@@ -12,6 +12,11 @@ import json
 
 # local imports
 from phishnet_api_v3.api_client import PhishNetAPI
+from phishnet_api_v3 import __version__
+
+
+def test_version():
+    assert __version__ == '0.1.0'
 
 
 class TestPhishnetAPI:
@@ -54,3 +59,55 @@ class TestPhishnetAPI:
         show_attendees_response = api.get_show_attendees(showdate='1991-07-19')
         assert show_attendees_response['response']['count'] == 53
         assert len(show_attendees_response['response']['data']) == 53
+
+    def test_update_show_attendance(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        api.auth_key = 'B6386A2485D94C73DAA'
+        api_uid = 15
+        with open('tests/data/add_attendance.json') as f:
+            add_attendance_json = json.load(f)
+        requests_mock.post(api.base_url + "attendance/add",
+                           json=add_attendance_json)
+        update_attendance_response = api.update_show_attendance(
+            1252691618, 'add')
+        assert update_attendance_response['error_message'] == "Successfully added 1997-11-30"
+        assert update_attendance_response['response']['data']['action'] == 'add'
+        assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
+        assert update_attendance_response['response']['data']['showid'] == 1252691618
+        shows_seen = update_attendance_response['response']['data']['shows_seen']
+        assert shows_seen == '63'
+
+        with open('tests/data/remove_attendance.json') as f:
+            remove_attendance_json = json.load(f)
+        requests_mock.post(api.base_url + "attendance/remove",
+                           json=remove_attendance_json)
+        update_attendance_response = api.update_show_attendance(
+            1252691618, 'remove')
+        assert update_attendance_response['error_message'] == "Successfully removed 1997-11-30"
+        assert update_attendance_response['response']['data']['action'] == 'remove'
+        assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
+        assert update_attendance_response['response']['data']['showid'] == 1252691618
+        assert update_attendance_response['response']['data']['shows_seen'] == str(
+            int(shows_seen) - 1)
+
+    def test_query_collections(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/query_collection.json') as f:
+            query_collection_json = json.load(f)
+        requests_mock.post(api.base_url + "collections/query",
+                           json=query_collection_json)
+        query_collections_response = api.query_collections(uid=1)
+        assert query_collections_response['response']['count'] == 7
+        assert len(query_collections_response['response']['data']) == 7
+        assert query_collections_response['response']['data'][0]['count'] == 2
+
+    def test_get_collections(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_collection.json') as f:
+            get_collection_json = json.load(f)
+        requests_mock.post(api.base_url + "collections/get",
+                           json=get_collection_json)
+        get_collections_response = api.get_collection(1294148902)
+        assert get_collections_response['response']['data']['show_count'] == 7
+        assert len(
+            get_collections_response['response']['data']['shows']) == 7

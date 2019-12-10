@@ -1,0 +1,64 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 7,
+        "data": [{
+                "collectionid": 1294084647,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "Best Versions of \"Ghost\"",
+                "count": 2,
+                "link": "http://phish.net/collection/1294084647"
+            },
+            {
+                "collectionid": 1294088122,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "My Couch Tours",
+                "count": 5,
+                "link": "http://phish.net/collection/1294088122"
+            },
+            {
+                "collectionid": 1294148902,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "Some Great Shows",
+                "count": 7,
+                "link": "http://phish.net/collection/1294148902"
+            },
+            {
+                "collectionid": 1294152220,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "Shows Featuring \"Camel Walk\"",
+                "count": 39,
+                "link": "http://phish.net/collection/1294152220"
+            },
+            {
+                "collectionid": 1314788611,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "Webcasts",
+                "count": 5,
+                "link": "http://phish.net/collection/1314788611"
+            },
+            {
+                "collectionid": 1435421391,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "Micah's shows",
+                "count": 25,
+                "link": "http://phish.net/collection/1435421391"
+            },
+            {
+                "collectionid": 1467231490,
+                "username": "sethadam1",
+                "uid": 1,
+                "collection_name": "Shows in 2016 and Stuff",
+                "count": 3,
+                "link": "http://phish.net/collection/1467231490"
+            }
+        ]
+    }
+}

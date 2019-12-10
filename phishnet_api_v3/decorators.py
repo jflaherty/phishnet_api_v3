@@ -15,23 +15,16 @@ def check_api_key(f):
     def wrapper(*args, **kwargs):
         if not args[0].api_key:
             raise AuthError(
-                "{} requires an API key".format(_qual_name_safe(f)))
+                "{} requires an API key".format(f.__qualname__))
+        args[3]['apikey'] = args[0].api_key
         return f(*args, **kwargs)
     return wrapper
 
 
-def check_authorized_user(f):
+def check_auth_key(f):
     def wrapper(*args, **kwargs):
-        if not args[0].auth_key:
+        if not args[0].auth_key and not args[0].uid == args[1]:
             raise AuthError(
-                "{} requires an auth_key".format(_qual_name_safe(f)))
+                "{} requires an auth_key for {}".format(f.__qualname__, args[1]))
         return f(*args, **kwargs)
     return wrapper
-
-
-def _qual_name_safe(f):
-    try:
-        return f.__qualname__
-    except AttributeError:  # Occurs when Python <= 3.3
-        from qualname import qualname
-        return qualname(f)

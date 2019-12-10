@@ -8,8 +8,9 @@
 # http://www.opensource.org/licenses/GPL v3-license
 # Copyright (c) 2019, Jay Flaherty <jayflaherty@gmail.com>
 #
-# This version 3 of phish.net API client is heavily borrowed from and inspired by phishnetpy (https://github.com/jameserrico/phishnetpy)
-# which was written for version 2 of the API.
+# This version 3 of phish.net API client is heavily borrowed from and inspired by
+# phishnetpy (https://github.com/jameserrico/phishnetpy) which was written for
+# version 2 of the API.
 
 from datetime import date
 from types import SimpleNamespace as Namespace
@@ -76,6 +77,7 @@ class PhishNetAPI(object):
         :param private_salt: The private_salt associated with the api_key.
         """
         self.auth_key = self.get_auth_key(uid, private_salt)
+        self.uid = uid
 
     def get_auth_key(self, uid, private_salt):
         """
@@ -89,7 +91,6 @@ class PhishNetAPI(object):
         else:
             return self._authority_get(uid, private_salt)
 
-    @check_api_key
     def _authority_get(self, uid, private_salt):
         """
         Retrieves the auth_key of a user who has already been authorized for your application.
@@ -146,7 +147,6 @@ class PhishNetAPI(object):
                     'Invalid monthname: {}'.format(kwargs['monthname']))
         return self.post(endpoint='blog/get', params=kwargs)
 
-    @check_api_key
     def get_all_artists(self):
         """
         The artists/all endpoint returns an array of artists whose setlists are tracked 
@@ -155,11 +155,10 @@ class PhishNetAPI(object):
         """
         return self.post(endpoint='artists/all')
 
-    @check_api_key
     def get_show_attendees(self, **kwargs):
         """
         Find all attendees for a specific show
-        :param **kwargs. Made up of at least one of the the following keys:
+        :param **kwargs: Made up of at least one of the the following keys:
             showid: the id for a specific show
             showdate: The date for a specific show
         :return: json response object of attendees for a specific show
@@ -175,11 +174,51 @@ class PhishNetAPI(object):
 
         return self.post(endpoint='attendance/get', params=kwargs)
 
-    @check_api_key
+    @check_auth_key
+    def update_show_attendance(self, show_id, update):
+        """
+        update your attendance to a specific show (add or remove.)
+        :param show_id: the show id associated with the show you want to update
+        :param update: either 'add' or 'remove'.
+        :return: json response object with confirmation of attendance update
+        """
+        params = {'authkey': self.auth_key, 'showid': show_id, 'uid': self.uid}
+        if update == 'add':
+            return self.post(endpoint='attendance/add', params=params)
+        elif update == 'remove':
+            return self.post(endpoint='attendance/remove', params=params)
+        else:
+            raise PhishNetAPIError(
+                'update_show_attendance param not valid: {}'.format(update))
+
+    def query_collections(self, **kwargs):
+        """
+        Query phish.net user collections. via the /collections/query endpoint.
+        :params **kwargs comprised of the following keys: collectionid, uid, contains.
+            contains is a comma separated string of showid's
+        :returns: json response object with a list of collections.
+        """
+        params = kwargs.keys()
+        legal_params = ['collectionid', 'uid', 'contains']
+
+        if not len(params) > 0 and not set(params).issubset(set(legal_params)):
+            raise PhishNetAPIError(
+                'Invalid query params for collections/query, {}'.format(kwargs))
+
+        return self.post(endpoint='collections/query', params=kwargs)
+
+    def get_collection(self, collection_id):
+        """
+        Get the details of a collection from the /collections/get endpoint.
+        :param collection_id: the collectionid associated with the collection.
+        :returns: json object of a collection detail.
+        """
+        return self.post(endpoint='collections/get', params={'collectionid': collection_id})
+
     def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
         """
         Get an item from the Phish.net API.
-        :param endpoint: The REST endpoint to call.  The endpoint is appended to the base URL.  
+        :param endpoint: The REST endpoint to call. The endpoint is appended to the base URL.  
         :param retry: An integer describing how many times the request may be retried.
         :param params: A dictionary of HTTP POST data.
         """
@@ -192,7 +231,6 @@ class PhishNetAPI(object):
 
         return response.json()
 
-    @check_api_key
     def _query(self, method, endpoint, params={}, retry=DEFAULT_RETRY):
         """
         :param method: HTTP method to query the API.  Typically for Phish.net only GET or POST. POST recommended.
@@ -200,11 +238,7 @@ class PhishNetAPI(object):
         :param data: A dictionary of HTTP GET parameters (for GET requests) or POST data (for POST requests).
         :param retry: An integer describing how many times the request may be retried.
         """
-
         url = self.base_url + endpoint
-        paams = params or {}
-        params['apikey'] = self.api_key
-
         try:
             return self._make_rest_call(method, url, params)
         except PhishNetAPIError:
@@ -218,13 +252,13 @@ class PhishNetAPI(object):
     def _make_rest_call(self, method, url, data):
         try:
             if method == 'GET':
-                response = self.session.request(
-                    method, url, params=data, allow_redirects=True,
+                response = self.session.get(
+                    url, params=data, allow_redirects=True,
                     verify=self.verify_ssl_certificate, timeout=self.timeout)
 
             elif method == 'POST':
-                response = self.session.request(
-                    method, url, params=data, verify=self.verify_ssl_certificate, timeout=self.timeout)
+                response = self.session.post(
+                    url, data=data, verify=self.verify_ssl_certificate, timeout=self.timeout)
             else:
                 raise NotImplementedError(
                     "Phish.net API only supports HTTP GET or POST.")

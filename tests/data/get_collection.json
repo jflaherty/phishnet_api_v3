@@ -1,0 +1,65 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 7,
+        "data": {
+            "collectionid": 1294148902,
+            "uid": 1,
+            "username": "sethadam1",
+            "collection_name": "Some Great Shows",
+            "notes": "",
+            "show_count": 7,
+            "shows": [{
+                    "showid": "1252614957",
+                    "showdate": "1995-05-16",
+                    "link": "http://phish.net/setlists/phish-may-16-1995-lowell-memorial-auditorium-lowell-ma-usa/html",
+                    "venue": "Lowell Memorial Auditorium",
+                    "location": "Lowell, MA, USA"
+                },
+                {
+                    "showid": "1252683361",
+                    "showdate": "1997-11-21",
+                    "link": "http://phish.net/setlists/phish-november-21-1997-hampton-coliseum-hampton-va-usa/html",
+                    "venue": "Hampton Coliseum",
+                    "location": "Hampton, VA, USA"
+                },
+                {
+                    "showid": "1252683584",
+                    "showdate": "1997-11-22",
+                    "link": "http://phish.net/setlists/phish-november-22-1997-hampton-coliseum-hampton-va-usa/html",
+                    "venue": "Hampton Coliseum",
+                    "location": "Hampton, VA, USA"
+                },
+                {
+                    "showid": "1250019273",
+                    "showdate": "1998-07-02",
+                    "link": "http://phish.net/setlists/phish-july-02-1998-the-grey-hall-freetown-christiania-copenhagen-denmark/html",
+                    "venue": "The Grey Hall",
+                    "location": "Freetown Christiania, Copenhagen, , Denmark"
+                },
+                {
+                    "showid": "1252274497",
+                    "showdate": "1999-12-30",
+                    "link": "http://phish.net/setlists/phish-december-30-1999-big-cypress-seminole-indian-reservation-big-cypress-fl-usa/html",
+                    "venue": "Big Cypress Seminole Indian Reservation",
+                    "location": "Big Cypress, FL, USA"
+                },
+                {
+                    "showid": "1252275436",
+                    "showdate": "1999-12-31",
+                    "link": "http://phish.net/setlists/phish-december-31-1999-big-cypress-seminole-indian-reservation-big-cypress-fl-usa/html",
+                    "venue": "Big Cypress Seminole Indian Reservation",
+                    "location": "Big Cypress, FL, USA"
+                },
+                {
+                    "showid": "1282687947",
+                    "showdate": "2010-10-30",
+                    "link": "http://phish.net/setlists/phish-october-30-2010-boardwalk-hall-atlantic-city-nj-usa/html",
+                    "venue": "Boardwalk Hall",
+                    "location": "Atlantic City, NJ, USA"
+                }
+            ]
+        }
+    }
+}
