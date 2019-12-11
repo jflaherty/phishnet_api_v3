@@ -161,7 +161,8 @@ class PhishNetAPI(object):
         :param **kwargs: Made up of at least one of the the following keys:
             showid: the id for a specific show
             showdate: The date for a specific show
-        :return: json response object of attendees for a specific show
+        :return: json response object of attendees for a specific show. 
+            - see tests/data/show_attendees.json
         """
         params = kwargs.keys()
         legal_params = ['showid', 'showdate']
@@ -177,10 +178,12 @@ class PhishNetAPI(object):
     @check_auth_key
     def update_show_attendance(self, show_id, update):
         """
-        update your attendance to a specific show (add or remove.)
+        update your attendance to a specific show (add or remove) via the
+        /attendance/add and /attendance/remove endpoints.
         :param show_id: the show id associated with the show you want to update
         :param update: either 'add' or 'remove'.
-        :return: json response object with confirmation of attendance update
+        :return: json response object with confirmation of attendance update 
+            - see tests/data/add_attendance.json and remove_attendance.json
         """
         params = {'authkey': self.auth_key, 'showid': show_id, 'uid': self.uid}
         if update == 'add':
@@ -193,7 +196,7 @@ class PhishNetAPI(object):
 
     def query_collections(self, **kwargs):
         """
-        Query phish.net user collections. via the /collections/query endpoint.
+        Query user collections from the /collections/query endpoint.
         :params **kwargs comprised of the following keys: collectionid, uid, contains.
             contains is a comma separated string of showid's
         :returns: json response object with a list of collections.
@@ -211,9 +214,25 @@ class PhishNetAPI(object):
         """
         Get the details of a collection from the /collections/get endpoint.
         :param collection_id: the collectionid associated with the collection.
-        :returns: json object of a collection detail.
+        :returns: json object of a collection detail. - see tests/data/get_collection.json
         """
         return self.post(endpoint='collections/get', params={'collectionid': collection_id})
+
+    def get_all_jamcharts(self):
+        """
+        Get an array of songs that have jamcharts, song, songid, name, link, and number
+        from the /jamcharts/all endpoint.
+        :return: json response object of all jamcharts - see tests/data/all_jamcharts.json
+        """
+        return self.post(endpoint='jamcharts/all')
+
+    def get_jamchart(self, song_id):
+        """
+        Get the details of a jamchart from the /jamcharts/get endpoint.
+        :param song_id: the songid associated with the jamchart.
+        :returns: json object of a jamchart detail. - see tests/data/get_jamchart.json
+        """
+        return self.post(endpoint='jamcharts/get', params={'songid': song_id})
 
     def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
         """

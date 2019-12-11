@@ -101,13 +101,35 @@ class TestPhishnetAPI:
         assert len(query_collections_response['response']['data']) == 7
         assert query_collections_response['response']['data'][0]['count'] == 2
 
-    def test_get_collections(self, requests_mock):
+    def test_get_collection(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
         with open('tests/data/get_collection.json') as f:
             get_collection_json = json.load(f)
         requests_mock.post(api.base_url + "collections/get",
                            json=get_collection_json)
-        get_collections_response = api.get_collection(1294148902)
-        assert get_collections_response['response']['data']['show_count'] == 7
+        get_collection_response = api.get_collection(1294148902)
+        assert get_collection_response['response']['data']['show_count'] == 7
         assert len(
-            get_collections_response['response']['data']['shows']) == 7
+            get_collection_response['response']['data']['shows']) == 7
+
+    def test_get_all_jamcharts(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/all_jamcharts.json') as f:
+            all_jamcharts_json = json.load(f)
+        requests_mock.post(api.base_url + "jamcharts/all",
+                           json=all_jamcharts_json)
+        all_jamcharts_response = api.get_all_jamcharts()
+        assert all_jamcharts_response['response']['count'] == 5
+        assert len(all_jamcharts_response['response']['data']) == 5
+        assert all_jamcharts_response['response']['data'][0]['songid'] == '2'
+
+    def test_get_jamchart(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_jamchart.json') as f:
+            get_jamchart_json = json.load(f)
+        requests_mock.post(api.base_url + "jamcharts/get",
+                           json=get_jamchart_json)
+        get_collections_response = api.get_jamchart(7)
+        assert get_collections_response['response']['data']['songid'] == 7
+        assert len(
+            get_collections_response['response']['data']['entries']) == 7
