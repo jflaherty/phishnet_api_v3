@@ -9,6 +9,7 @@
 # Copyright (c) 2019, Jay Flaherty <jayflaherty@gmail.com>
 
 import json
+import pytest
 
 # local imports
 from phishnet_api_v3.api_client import PhishNetAPI
@@ -40,6 +41,18 @@ class TestPhishnetAPI:
         assert recent_blogs_response['response']['count'] == 3
         assert len(recent_blogs_response['response']['data']) == 3
 
+    def test_get_blogs(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/recent_blogs.json') as f:
+            get_blogs_json = json.load(f)
+        requests_mock.post(api.base_url + "blog/get", json=get_blogs_json)
+        get_blogs_response = api.get_blogs(year=2009)
+        assert get_blogs_response['response']['count'] == 3
+        assert len(get_blogs_response['response']['data']) == 3
+        with pytest.raises(ValueError):
+            api.get_blogs(year=2008)
+            api.get_blogs(year=2020)
+
     def test_get_all_artists(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
         with open('tests/data/all_artists.json') as f:
@@ -59,6 +72,9 @@ class TestPhishnetAPI:
         show_attendees_response = api.get_show_attendees(showdate='1991-07-19')
         assert show_attendees_response['response']['count'] == 53
         assert len(show_attendees_response['response']['data']) == 53
+        with pytest.raises(ValueError):
+            api.get_show_attendees(showdate='1991-13-19')
+            api.get_show_attendees(showdate='1982-12-19')
 
     def test_update_show_attendance(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
@@ -129,7 +145,54 @@ class TestPhishnetAPI:
             get_jamchart_json = json.load(f)
         requests_mock.post(api.base_url + "jamcharts/get",
                            json=get_jamchart_json)
-        get_collections_response = api.get_jamchart(7)
-        assert get_collections_response['response']['data']['songid'] == 7
+        get_jamchart_response = api.get_jamchart(7)
+        assert get_jamchart_response['response']['data']['songid'] == 7
         assert len(
-            get_collections_response['response']['data']['entries']) == 7
+            get_jamchart_response['response']['data']['entries']) == 7
+
+    def test_get_all_people(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/all_people.json') as f:
+            all_people_json = json.load(f)
+        requests_mock.post(api.base_url + "people/all",
+                           json=all_people_json)
+        all_people_response = api.get_all_people()
+        assert all_people_response['response']['count'] == 12
+        assert len(all_people_response['response']['data']) == 12
+        assert all_people_response['response']['data'][0]['personid'] == 5710
+
+    def test_get_all_people_types(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/all_people_types.json') as f:
+            all_people_types_json = json.load(f)
+        requests_mock.post(api.base_url + "people/get",
+                           json=all_people_types_json)
+        all_people_types_response = api.get_all_people_types()
+        assert all_people_types_response['response']['count'] == 9
+        assert len(all_people_types_response['response']['data'].keys()) == 9
+        assert all_people_types_response['response']['data']["1"] == "The Band"
+
+    def test_get_appearances(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_appearances.json') as f:
+            get_appearances_json = json.load(f)
+        requests_mock.post(api.base_url + "people/appearances",
+                           json=get_appearances_json)
+        get_appearances_response = api.get_appearances(79)
+        assert get_appearances_response['response']['count'] == 1
+        assert len(get_appearances_response['response']['data']) == 1
+        assert get_appearances_response['response']['data'][0]['personid'] == 79
+        with pytest.raises(ValueError):
+            api.get_appearances(79, 1982)
+
+    def test_get_relationships(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_relationships.json') as f:
+            get_relationships_json = json.load(f)
+        requests_mock.post(api.base_url + "relationships/get",
+                           json=get_relationships_json)
+        all_people_types_response = api.get_relationships(1)
+        assert all_people_types_response['response']['count'] == 2
+        assert len(all_people_types_response['response']['data'].keys()) == 2
+        assert all_people_types_response['response']['data']["friends"].keys == 13
+        assert all_people_types_response['response']['data']["fans"].keys == 13

@@ -1,0 +1,20 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 1,
+        "data": [{
+            "showid": 1253073055,
+            "showdate": "1995-11-16",
+            "permalink": "http://phish.net/setlists/phish-november-16-1995-west-palm-beach-auditorium-west-palm-beach-fl-usa.html",
+            "artist": "Phish",
+            "venue": "West Palm Beach Auditorium",
+            "location": "West Palm Beach, FL, USA",
+            "name": "Jimmy Buffett",
+            "personid": 79,
+            "role": "Staff and Crew",
+            "footnote": "",
+            "link": "http://phish.net/shows/featuring/jimmy-buffett"
+        }]
+    }
+}

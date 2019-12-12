@@ -23,3 +23,7 @@ class PhishNetAPIError(Exception):
 
 class NumberRetriesExceeded(Exception):
     pass
+
+
+class ParamValidationError(Exception):
+    pass

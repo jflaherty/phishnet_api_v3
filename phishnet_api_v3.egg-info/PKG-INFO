@@ -1,0 +1,11 @@
+Metadata-Version: 1.2
+Name: phishnet-api-v3
+Version: 0.1.0
+Summary: Python3 client to interface with v3 of the api.phish.net REST endpoints.
+Home-page: UNKNOWN
+Author: Jay Flaherty
+Author-email: jayflaherty@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.5,<4.0

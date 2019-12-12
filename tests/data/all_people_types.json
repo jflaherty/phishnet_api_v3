@@ -1,0 +1,18 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 9,
+        "data": {
+            "1": "The Band",
+            "2": "Staff and Crew",
+            "3": "Notable Fans",
+            "4": "Song Characters",
+            "5": "Special Guests",
+            "6": "Phish.net Staff",
+            "97": "Songwriters",
+            "98": "Side Shows Musicians",
+            "99": "More"
+        }
+    }
+}

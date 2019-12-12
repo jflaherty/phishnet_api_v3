@@ -1,0 +1,39 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 2,
+        "data": {
+            "friends": {
+                "2": "Lemuria",
+                "14": "Bizarro_Jerry",
+                "22": "pzerbo",
+                "31": "jugglerswithfire",
+                "484": "mikey",
+                "1418": "EsthersDoll",
+                "2877": "johnnyd",
+                "3371": "chadfa",
+                "6255": "CinnamonGirl",
+                "6528": "mmetch",
+                "7533": "Just_Ivy",
+                "10089": "Dog_Faced_Boy",
+                "11972": "abassell"
+            },
+            "fans": {
+                "2": "Lemuria",
+                "22": "pzerbo",
+                "867": "MJZ1974",
+                "2873": "conradjohansen",
+                "2877": "johnnyd",
+                "3371": "chadfa",
+                "3952": "757phan",
+                "5868": "barefootbob",
+                "6255": "CinnamonGirl",
+                "6528": "mmetch",
+                "7533": "Just_Ivy",
+                "11972": "abassell",
+                "32443": "jahroy"
+            }
+        }
+    }
+}

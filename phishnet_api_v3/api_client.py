@@ -21,8 +21,9 @@ import calendar
 import json
 import logging
 
-from phishnet_api_v3.exceptions import *
+from pwd import *
 from phishnet_api_v3.decorators import *
+from phishnet_api_v3.exceptions import *
 
 
 class PhishNetAPI(object):
@@ -121,9 +122,9 @@ class PhishNetAPI(object):
         """
         return self.post(endpoint='blog/get')
 
-    def query_blogs(self, **kwargs):
+    def get_blogs(self, **kwargs):
         """
-        Find all blogs that match the query fields below (maximum of 15 results)
+        Find all blogs that match the params below (maximum of 15 results)
         :param **kwargs. Made up of at least one of the the following keys:
             month: The month of the year as as integer
             day: The day of the month as as integer
@@ -141,10 +142,17 @@ class PhishNetAPI(object):
                 'Invalid query params for blog/get, {}'.format(kwargs))
 
         if 'monthname' in kwargs:
-            legal_month_names = list(calendar.month_name)
+            legal_month_names = ['january', 'february', 'march', 'april', 'may',
+                                 'june', 'july', 'august', 'september', 'october', 'november', 'december']
             if not kwargs['monthname'] in legal_month_names:
                 raise PhishNetAPIError(
                     'Invalid monthname: {}'.format(kwargs['monthname']))
+        if 'year' in kwargs:
+            current_year = date.today().year
+            if not 2009 <= kwargs['year'] <= current_year:
+                raise ValueError(
+                    'Invalid year parameter (>=2009 and <= {}) for people/appearances: {}'.format(current_year, kwargs['year']))
+
         return self.post(endpoint='blog/get', params=kwargs)
 
     def get_all_artists(self):
@@ -233,6 +241,56 @@ class PhishNetAPI(object):
         :returns: json object of a jamchart detail. - see tests/data/get_jamchart.json
         """
         return self.post(endpoint='jamcharts/get', params={'songid': song_id})
+
+    def get_all_people(self):
+        """
+        Get a list of personid, name, type, and a link to all shows in which a person is featured.
+        :returns: json object of all people - see tests/data/all_people.json
+        """
+        return self.post(endpoint='people/all')
+
+    def get_all_people_types(self):
+        """
+        Get a dict of all people types
+        :returns: json object of all people types - see tests/data/all_people_types.json
+        """
+        return self.post(endpoint='people/get')
+
+    def get_people_by_show(self, show_id):
+        """
+        Get list of performers at a show from the /people/byshow endpoint.
+        :param show_id: the showid associated with the show.
+        :returns: json object of a list of performers for a show. 
+            - see tests/data/people_by_show.json
+        """
+        return self.post(endpoint='jamcharts/get', params={'songid': show_id})
+
+    def get_appearances(self, person_id, year=None):
+        """
+        Get list of appearances for a particular performer from the /people/appearances endpoint.
+        :param person_id: the personid associated with the appearances.
+        :param year: optional parameter to narrow the list by year (>=1983)
+        :returns: json object of a list of appearances for a performer. 
+            - see tests/data/get_appearances.json
+        """
+        params = {'personid': person_id}
+        if year is not None:
+            current_year = date.today().year
+            if 1983 <= year <= current_year:
+                params['year'] = year
+            else:
+                raise ValueError(
+                    'Invalid year parameter (>=1983 <= {}) for people/appearances: {}'.format(current_year, year))
+
+        return self.post(endpoint='people/appearances', params=params)
+
+    def get_relationships(self, uid):
+        """
+        Returns an array of friends & fans from the /relationships/get endpoint.
+        :param uid: the uid associated with the relationship.
+        :returns: json object of a user's relationships. - see tests/data/get_relationships.json
+        """
+        return self.post(endpoint='relationships/get', params={'uid': uid})
 
     def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
         """

@@ -1,0 +1,17 @@
+[
+  "tests/test_api.py::test_version",
+  "tests/test_api.py::TestPhishnetAPI::test_authorize",
+  "tests/test_api.py::TestPhishnetAPI::test_get_recent_blogs",
+  "tests/test_api.py::TestPhishnetAPI::test_get_blogs",
+  "tests/test_api.py::TestPhishnetAPI::test_get_all_artists",
+  "tests/test_api.py::TestPhishnetAPI::test_get_show_attendees",
+  "tests/test_api.py::TestPhishnetAPI::test_update_show_attendance",
+  "tests/test_api.py::TestPhishnetAPI::test_query_collections",
+  "tests/test_api.py::TestPhishnetAPI::test_get_collection",
+  "tests/test_api.py::TestPhishnetAPI::test_get_all_jamcharts",
+  "tests/test_api.py::TestPhishnetAPI::test_get_jamchart",
+  "tests/test_api.py::TestPhishnetAPI::test_get_all_people",
+  "tests/test_api.py::TestPhishnetAPI::test_get_all_people_types",
+  "tests/test_api.py::TestPhishnetAPI::test_get_appearances",
+  "tests/test_api.py::TestPhishnetAPI::test_get_relationships"
+]
