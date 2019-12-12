@@ -13,5 +13,9 @@
   "tests/test_api.py::TestPhishnetAPI::test_get_all_people",
   "tests/test_api.py::TestPhishnetAPI::test_get_all_people_types",
   "tests/test_api.py::TestPhishnetAPI::test_get_appearances",
-  "tests/test_api.py::TestPhishnetAPI::test_get_relationships"
+  "tests/test_api.py::TestPhishnetAPI::test_get_relationships",
+  "tests/test_api.py::TestPhishnetAPI::test_query_reviews",
+  "tests/test_api.py::TestPhishnetAPI::test_get_setlist",
+  "tests/test_api.py::TestPhishnetAPI::test_get_latest_setlist",
+  "tests/test_api.py::TestPhishnetAPI::test_get_recent_setlists"
 ]

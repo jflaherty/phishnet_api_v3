@@ -69,9 +69,9 @@ class PhishNetAPI(object):
 
     def authorize(self, uid, private_salt):
         """
-        Authorize the current instance to be able to make privileged API calls on behalf of a selected user. 
-        In order to use this method, The phish.net registered user must have gone to 
-        https://phish.net/authorize?appid=X&uid=Y to authorize themselves with your app and allow you to get 
+        Authorize the current instance to be able to make privileged API calls on behalf of a selected user.
+        In order to use this method, The phish.net registered user must have gone to
+        https://phish.net/authorize?appid=X&uid=Y to authorize themselves with your app and allow you to get
         thier auth_key via the authority/get endpoint.
 
         :param uid: The uid to authorize on behalf of.
@@ -82,7 +82,7 @@ class PhishNetAPI(object):
 
     def get_auth_key(self, uid, private_salt):
         """
-        This method will handle negotiation of the authorization for a user.  
+        This method will handle negotiation of the authorization for a user.
         :param uid: The uid to fetch the auth_key on behalf of.
         :param private_salt: The private_salt associated with the api_key.
         :returns the auth_key associated with the uid you will run api calls on.
@@ -157,7 +157,7 @@ class PhishNetAPI(object):
 
     def get_all_artists(self):
         """
-        The artists/all endpoint returns an array of artists whose setlists are tracked 
+        The artists/all endpoint returns an array of artists whose setlists are tracked
         in the Phish.net setlist database, along with the associated artistid.
         :return: json response object of all artists - see tests/data/all_artists.json
         """
@@ -169,7 +169,7 @@ class PhishNetAPI(object):
         :param **kwargs: Made up of at least one of the the following keys:
             showid: the id for a specific show
             showdate: The date for a specific show
-        :return: json response object of attendees for a specific show. 
+        :return: json response object of attendees for a specific show.
             - see tests/data/show_attendees.json
         """
         params = kwargs.keys()
@@ -190,7 +190,7 @@ class PhishNetAPI(object):
         /attendance/add and /attendance/remove endpoints.
         :param show_id: the show id associated with the show you want to update
         :param update: either 'add' or 'remove'.
-        :return: json response object with confirmation of attendance update 
+        :return: json response object with confirmation of attendance update
             - see tests/data/add_attendance.json and remove_attendance.json
         """
         params = {'authkey': self.auth_key, 'showid': show_id, 'uid': self.uid}
@@ -260,7 +260,7 @@ class PhishNetAPI(object):
         """
         Get list of performers at a show from the /people/byshow endpoint.
         :param show_id: the showid associated with the show.
-        :returns: json object of a list of performers for a show. 
+        :returns: json object of a list of performers for a show.
             - see tests/data/people_by_show.json
         """
         return self.post(endpoint='jamcharts/get', params={'songid': show_id})
@@ -270,7 +270,7 @@ class PhishNetAPI(object):
         Get list of appearances for a particular performer from the /people/appearances endpoint.
         :param person_id: the personid associated with the appearances.
         :param year: optional parameter to narrow the list by year (>=1983)
-        :returns: json object of a list of appearances for a performer. 
+        :returns: json object of a list of appearances for a performer.
             - see tests/data/get_appearances.json
         """
         params = {'personid': person_id}
@@ -291,6 +291,51 @@ class PhishNetAPI(object):
         :returns: json object of a user's relationships. - see tests/data/get_relationships.json
         """
         return self.post(endpoint='relationships/get', params={'uid': uid})
+
+    def query_reviews(self, **kwargs):
+        """
+        Query user reviews from the /reviews/query endpoint.
+        :params **kwargs comprised of the following keys: showid, uid,
+            posted_on, posted_after, posted_before.
+        :returns: json response object with a list of reviews.
+        """
+        params = kwargs.keys()
+        legal_params = ['showid', 'uid',
+                        'posted_on', 'posted_after', 'posted_before']
+
+        if not len(params) > 0 and not set(params).issubset(set(legal_params)):
+            raise PhishNetAPIError(
+                'Invalid query params for reviews/query, {}'.format(kwargs))
+
+        return self.post(endpoint='reviews/query', params=kwargs)
+
+    def get_latest_setlist(self):
+        """
+        Get an array with the most recent Phish setlist
+        :returns: json object of the latest setlist - see tests/data/latest_setlist.json
+        """
+        return self.post(endpoint='setlists/latest')
+
+    def get_setlist(self, show_id=None, show_date=None):
+        """
+        Get an array with the Phish setlist that matches the showid or showdate.
+        If both parameters are passed in, showid takes precedence. If no params are
+        passed in then it returns the latest setlist.
+        :returns: json object of matching setlist - see tests/data/latest_setlist.json
+        """
+        if show_id is not None:
+            return self.post(endpoint='setlists/get', params={'showid': show_id})
+        elif show_date is not None:
+            return self.post(endpoint='setlists/get', params={'showdate': show_date})
+        else:
+            return self.get_latest_setlist()
+
+    def get_recent_setlists(self):
+        """
+        Get an array with the 10 most recent Phish setlists
+        :returns: json object of the 10 most recent setlist - see tests/data/recent_setlists.json
+        """
+        return self.post(endpoint='setlists/recent')
 
     def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
         """
