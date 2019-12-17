@@ -14,7 +14,6 @@
 
 from datetime import date
 from types import SimpleNamespace as Namespace
-import arrow
 import requests
 import hashlib
 import calendar
@@ -337,6 +336,101 @@ class PhishNetAPI(object):
         """
         return self.post(endpoint='setlists/recent')
 
+    def get_tiph_setlist(self):
+        """
+        Get an array with a random setlist from today's date (MM/DD) in Phish history
+        :returns: json object of the setlist - see tests/data/tiph_setlist.json
+        """
+        return self.post(endpoint='setlists/tiph')
+
+    def get_random_setlist(self):
+        """
+        Get an array with a random setlist in Phish history
+        :returns: json object of the setlist - see tests/data/tiph_setlist.json
+        """
+        return self.post(endpoint='setlist/random')
+
+    def get_in_progress_setlist(self):
+        """
+        Get the Most Recent Setlist, Including in Progress.
+        :returns: json object of the setlist - see tests/data/tiph_setlist.json
+        """
+        return self.post(endpoint='setlists/progress')
+
+    def get_show_links(self, show_id):
+        """
+        Get links associated with a show, including LivePhish links, Phish.net recaps, photos, and more.
+        :returns: json object of show links - see tests/data/get_show_links.json
+        """
+        return self.post(endpoint='shows/links', params={'showid': show_id})
+
+    def get_upcoming_shows(self):
+        """
+        Get an array of upcoming shows.
+        :returns: json object of upcoming shows - see tests/data/get_upcoming_shows.json
+        """
+        return self.post(endpoint='shows/upcoming')
+
+    def query_shows(self, **kwargs):
+        """
+        Query the show list via one or more parameters. If no paramters are fed, 
+        returns error_code 3. Please note that you cannot send an argument of 
+        "showdate" or "date" to this endpoint. If you know the showdate for which 
+        you want details, please use get_setlist()
+        """
+        params = kwargs.keys()
+        legal_params = ['showids', 'year', 'month', 'day', 'venueid',
+                        'tourid', 'country', 'city', 'state', 'limit', 'order'
+                        'showdate_gt', 'showdate_gte', 'showdate_lt', 'showdate_lte',
+                        'showyear_gt', 'showyear_gte', 'showyear_lt', 'showyear_lte']
+
+        if not len(params) > 0 and not set(params).issubset(set(legal_params)):
+            raise PhishNetAPIError(
+                'Invalid query params for reviews/query, {}'.format(kwargs))
+
+        current_year = date.today().year
+        if 'year' in params:
+            if not 1983 <= kwargs['year'] <= current_year:
+                raise ValueError(
+                    'Invalid year parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['year']))
+
+        if 'month' in params:
+            if not 1 <= kwargs['month'] <= 12:
+                raise ValueError(
+                    'Invalid month parameter (1 - 12) for shows/query: {}'.format(kwargs['month']))
+
+        if 'day' in params:
+            if not 1 <= kwargs['day'] <= 31:
+                raise ValueError(
+                    'Invalid month parameter (1 - 31) for shows/query: {}'.format(kwargs['day']))
+        if 'showdate_gt' in params:
+            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_gt'])
+        if 'showdate_gte' in params:
+            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_gte'])
+        if 'showdate_lt' in params:
+            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_lt'])
+        if 'showdate_lte' in params:
+            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_lte'])
+
+        if 'showyear_gt' in params:
+            if 1983 > kwargs['showyear_gt'] > current_year:
+                raise ValueError(
+                    'Invalid showyear_gt parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyear_gt']))
+        if 'showyear_gte' in params:
+            if 1983 > kwargs['showyear_gte'] > current_year:
+                raise ValueError(
+                    'Invalid showyear_gte parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyear_gte']))
+        if 'showyear_lt' in params:
+            if 1983 > kwargs['showyear_lt'] > current_year:
+                raise ValueError(
+                    'Invalid showyear_lt parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyear_lt']))
+        if 'showyear_lte' in params:
+            if 1983 > kwargs['showyear_lte'] > current_year:
+                raise ValueError(
+                    'Invalid showyear_lte parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyearlte']))
+
+        return self.post(endpoint='shows/query', params=kwargs)
+
     def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
         """
         Get an item from the Phish.net API.
@@ -405,8 +499,8 @@ class PhishNetAPI(object):
             return str(d)
         else:
             try:
-                d = arrow.get(d).date()
-            except arrow.parser.ParserError:
+                d = date.fromisoformat(d)
+            except TypeError:
                 raise ValueError(
                     'Showdate {} could not be parsed into a date. Use YYYY-MM-DD format.'.format(d))
             return str(d)

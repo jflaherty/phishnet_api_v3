@@ -17,5 +17,10 @@
   "tests/test_api.py::TestPhishnetAPI::test_query_reviews",
   "tests/test_api.py::TestPhishnetAPI::test_get_setlist",
   "tests/test_api.py::TestPhishnetAPI::test_get_latest_setlist",
-  "tests/test_api.py::TestPhishnetAPI::test_get_recent_setlists"
+  "tests/test_api.py::TestPhishnetAPI::test_get_recent_setlists",
+  "tests/test_api.py::TestPhishnetAPI::test_get_tiph_setlist",
+  "tests/test_api.py::TestPhishnetAPI::test_get_random_setlist",
+  "tests/test_api.py::TestPhishnetAPI::test_get_show_links",
+  "tests/test_api.py::TestPhishnetAPI::test_get_upcoming_shows",
+  "tests/test_api.py::TestPhishnetAPI::test_query_shows"
 ]
