@@ -1,0 +1,22 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 1,
+        "data": {
+            "1": {
+                "uid": 1,
+                "username": "sethadam1",
+                "realname": "Adam Sch",
+                "joined": "2009-06-24",
+                "member_since": "7 years ago",
+                "avatar": "https://smedia.pnet-static.com/avatars/1.jpg",
+                "link": "http://phish.net/user/sethadam1",
+                "bio": "Phish.net, The Mockingbird Foundation, All Things Web @ Umphrey's McGee, family man. Please call me Adam.",
+                "website": "http://firsttube.com/",
+                "facebook": "https://facebook.com/sethadam1",
+                "twitter": "https://twitter.com/sethadam1"
+            }
+        }
+    }
+}

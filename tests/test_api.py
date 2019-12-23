@@ -13,6 +13,7 @@ import pytest
 
 # local imports
 from phishnet_api_v3.api_client import PhishNetAPI
+from phishnet_api_v3.exceptions import ParamValidationError
 from phishnet_api_v3 import __version__
 
 
@@ -29,8 +30,8 @@ class TestPhishnetAPI:
         requests_mock.post(api.base_url + "authority/get", json=authority_json)
         api.authorize(15, '123456789abcdefghij')
         assert api.uid == 15
-        assert api.auth_key == "B6386A2485D94C73DAA"
-        assert api.app_id == 12345
+        assert api.authkey == "B6386A2485D94C73DAA"
+        assert api.appid == 12345
 
     def test_get_recent_blogs(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
@@ -51,7 +52,7 @@ class TestPhishnetAPI:
         assert blogs_response['response']['count'] == 3
         assert len(blogs_response['response']['data']) == 3
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.get_blogs(year=2008)
             api.get_blogs(year=2020)
 
@@ -76,14 +77,15 @@ class TestPhishnetAPI:
         attendees_response = api.get_show_attendees(showdate='1991-07-19')
         assert attendees_response['response']['count'] == 53
         assert len(attendees_response['response']['data']) == 53
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.get_show_attendees(showdate='1991-13-19')
             api.get_show_attendees(showdate='1982-12-19')
+            api.get_show_attendees(showid=0)
 
     def test_update_show_attendance(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
         api.auth_key = 'B6386A2485D94C73DAA'
-        api_uid = 15
+        api.uid = 15
         with open('tests/data/add_attendance.json') as f:
             add_attendance_json = json.load(f)
         requests_mock.post(api.base_url + "attendance/add",
@@ -196,7 +198,7 @@ class TestPhishnetAPI:
         assert len(appearances_response['response']['data']) == 1
         assert appearances_response['response']['data'][0]['personid'] == 79
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.get_appearances(79, 1982)
 
     def test_get_relationships(self, requests_mock):
@@ -245,12 +247,12 @@ class TestPhishnetAPI:
         requests_mock.post(api.base_url + "setlists/get",
                            json=get_setlist_json)
 
-        setlist_response = api.get_setlist(1252698446)
+        setlist_response = api.get_setlist(showid=1252698446)
         assert setlist_response['response']['count'] == 1
         assert len(setlist_response['response']['data']) == 1
         assert setlist_response['response']['data'][0]['showid'] == 1252698446
 
-        get_setlists_response = api.get_setlist('1997-12-29')
+        get_setlists_response = api.get_setlist(showdate='1997-12-29')
         assert get_setlists_response['response']['count'] == 1
         assert len(get_setlists_response['response']['data']) == 1
         assert get_setlists_response['response']['data'][0]['showid'] == 1252698446
@@ -339,11 +341,11 @@ class TestPhishnetAPI:
         assert len(query_shows_response['response']['data']) == 14
         assert query_shows_response['response']['data'][0]['showid'] == 1252691618
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.query_shows(year=1982)
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.query_shows(month=13)
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.query_shows(day=32)
-        with pytest.raises(ValueError):
+        with pytest.raises(ParamValidationError):
             api.query_shows(showdate_gt=1982)

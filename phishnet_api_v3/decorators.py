@@ -9,22 +9,31 @@
 # Copyright (c) 2019, Jay Flaherty <jayflaherty@gmail.com>
 
 from phishnet_api_v3.exceptions import AuthError
+from phishnet_api_v3.validators import validate
 
 
-def check_api_key(f):
+def check_apikey(f):
     def wrapper(*args, **kwargs):
-        if not args[0].api_key:
+        if not args[0].apikey:
             raise AuthError(
                 "{} requires an API key".format(f.__qualname__))
-        args[3]['apikey'] = args[0].api_key
+        args[3]['apikey'] = args[0].apikey
         return f(*args, **kwargs)
     return wrapper
 
 
-def check_auth_key(f):
+def check_authkey(f):
     def wrapper(*args, **kwargs):
         if not args[0].auth_key and not args[0].uid == args[1]:
             raise AuthError(
                 "{} requires an auth_key for {}".format(f.__qualname__, args[1]))
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def validate_params(f):
+    def wrapper(*args, **kwargs):
+        if 'params' in kwargs.keys():
+            validate(*args, **kwargs)
         return f(*args, **kwargs)
     return wrapper

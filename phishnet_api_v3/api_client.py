@@ -13,6 +13,7 @@
 # version 2 of the API.
 
 from datetime import date
+import urllib
 from types import SimpleNamespace as Namespace
 import requests
 import hashlib
@@ -29,10 +30,10 @@ class PhishNetAPI(object):
     DEFAULT_VERSION = 'v3'
     DEFAULT_RETRY = 3
 
-    def __init__(self, api_key, base_url='https://api.phish.net/',
+    def __init__(self, apikey, base_url='https://api.phish.net/',
                  version=DEFAULT_VERSION, verify_ssl_certificate=True, timeout=60, log_level='WARNING'):
         """
-        :param api_key: Your application's pre-assigned API key. This parameter is required for all public API
+        :param apikey: Your application's pre-assigned API key. This parameter is required for all public API
             methods.
         :param base_url: The base URL to invoke API calls from.  Defaults the the standard phish.net API base.
         :param version: A string with the API version. This client targets version v3. If you do not pass this variable
@@ -46,7 +47,7 @@ class PhishNetAPI(object):
         :param log_level: one of the following logger.level levels - DEBUG, INFO, WARNING, ERROR, CRITICAL
         """
 
-        self.api_key = api_key
+        self.apikey = apikey
         self.version = version
         self.format = format
         if not base_url.endswith('/'):
@@ -63,54 +64,56 @@ class PhishNetAPI(object):
         self.timeout = timeout
         self.session = requests.session()
         self.uid = None
-        self.auth_key = None
-        self.app_id = None
+        self.authkey = None
+        self.appid = None
 
     def authorize(self, uid, private_salt):
         """
         Authorize the current instance to be able to make privileged API calls on behalf of a selected user.
         In order to use this method, The phish.net registered user must have gone to
         https://phish.net/authorize?appid=X&uid=Y to authorize themselves with your app and allow you to get
-        thier auth_key via the authority/get endpoint.
+        thier authkey via the authority/get endpoint.
 
         :param uid: The uid to authorize on behalf of.
-        :param private_salt: The private_salt associated with the api_key.
+        :param private_salt: The private_salt associated with the apikey.
         """
-        self.auth_key = self.get_auth_key(uid, private_salt)
+        self.authkey = self.get_authkey(uid, private_salt)
         self.uid = uid
 
-    def get_auth_key(self, uid, private_salt):
+    def get_authkey(self, uid, private_salt):
         """
         This method will handle negotiation of the authorization for a user.
-        :param uid: The uid to fetch the auth_key on behalf of.
-        :param private_salt: The private_salt associated with the api_key.
-        :returns the auth_key associated with the uid you will run api calls on.
+        :param uid: The uid to fetch the authkey on behalf of.
+        :param private_salt: The private_salt associated with the apikey.
+        :returns the authkey associated with the uid you will run authorized 
+            api calls on.
         """
-        if self.uid == uid and self.auth_key:
-            return self.auth_key
+        if self.uid == uid and self.authkey:
+            return self.authkey
         else:
             return self._authority_get(uid, private_salt)
 
     def _authority_get(self, uid, private_salt):
         """
-        Retrieves the auth_key of a user who has already been authorized for your application.
+        Retrieves the authkey of a user who has already been authorized for your application.
         :param uid: The uid of the registered phish.net user you want to authorize
-        :param private salt: The private salt associated with the api_key (see https://api.phish.net/keys)
+        :param private salt: The private salt associated with the apikey (see https://api.phish.net/keys)
         :return: The 19 digit hexadecimal authorization key for the user id passed in. On failure, or if the
             app is not authorized, the method will return 0.
         """
         self.uid = uid
-        md5_str = private_salt + self.api_key + str(self.uid)
+        md5_str = private_salt + self.apikey + str(self.uid)
         unique_hash = hashlib.md5(md5_str.encode()).hexdigest()
         print('unique_hash: ' + unique_hash)
         params = {
-            'api_key': self.api_key,
+            'apikey': self.apikey,
             'uid': uid,
             'unique_hash': unique_hash
         }
         endpoint = "authority/get"
-        response = self.post(endpoint=endpoint, params=params)
-        self.app_id = response['response']['data']['appid']
+        response = self.post(function='_authority_get',
+                             endpoint=endpoint, params=params)
+        self.appid = response['response']['data']['appid']
         print(response['response']['data'])
         return response['response']['data']['authkey']
 
@@ -119,7 +122,7 @@ class PhishNetAPI(object):
         Get a list of recently posted entries to the phish.net blog (last 15 entries).
         :return: json response object of recent blog entries - see tests/data/recent_blogs.json
         """
-        return self.post(endpoint='blog/get')
+        return self.post(function='get_recent_blogs', endpoint='blog/get')
 
     def get_blogs(self, **kwargs):
         """
@@ -134,25 +137,13 @@ class PhishNetAPI(object):
         :return: json response object of blogs that match the query(see get_recent_blogs())
         """
         params = kwargs.keys()
-        legal_params = ['month', 'day', 'year', 'username', 'uid']
+        legal_params = ['month', 'day', 'year', 'monthname', 'username', 'uid']
 
         if not len(params) > 0 and not set(params).issubset(set(legal_params)):
-            raise PhishNetAPIError(
+            raise ParamValidationError(
                 'Invalid query params for blog/get, {}'.format(kwargs))
 
-        if 'monthname' in kwargs:
-            legal_month_names = ['january', 'february', 'march', 'april', 'may',
-                                 'june', 'july', 'august', 'september', 'october', 'november', 'december']
-            if not kwargs['monthname'] in legal_month_names:
-                raise PhishNetAPIError(
-                    'Invalid monthname: {}'.format(kwargs['monthname']))
-        if 'year' in kwargs:
-            current_year = date.today().year
-            if not 2009 <= kwargs['year'] <= current_year:
-                raise ValueError(
-                    'Invalid year parameter (>=2009 and <= {}) for people/appearances: {}'.format(current_year, kwargs['year']))
-
-        return self.post(endpoint='blog/get', params=kwargs)
+        return self.post(function='get_blogs', endpoint='blog/get', params=kwargs)
 
     def get_all_artists(self):
         """
@@ -160,7 +151,7 @@ class PhishNetAPI(object):
         in the Phish.net setlist database, along with the associated artistid.
         :return: json response object of all artists - see tests/data/all_artists.json
         """
-        return self.post(endpoint='artists/all')
+        return self.post(function='get_all_artists', endpoint='artists/all')
 
     def get_show_attendees(self, **kwargs):
         """
@@ -177,13 +168,10 @@ class PhishNetAPI(object):
         if not len(params) > 0 and not set(params).issubset(set(legal_params)):
             raise PhishNetAPIError("show_id or show_date required")
 
-        if kwargs['showdate']:
-            kwargs['showdate'] = self.parse_date(kwargs['showdate'])
+        return self.post(function='V', endpoint='attendance/get', params=kwargs)
 
-        return self.post(endpoint='attendance/get', params=kwargs)
-
-    @check_auth_key
-    def update_show_attendance(self, show_id, update):
+    @check_authkey
+    def update_show_attendance(self, showid, update):
         """
         update your attendance to a specific show (add or remove) via the
         /attendance/add and /attendance/remove endpoints.
@@ -192,11 +180,11 @@ class PhishNetAPI(object):
         :return: json response object with confirmation of attendance update
             - see tests/data/add_attendance.json and remove_attendance.json
         """
-        params = {'authkey': self.auth_key, 'showid': show_id, 'uid': self.uid}
+        params = {'authkey': self.authkey, 'showid': showid, 'uid': self.uid}
         if update == 'add':
-            return self.post(endpoint='attendance/add', params=params)
+            return self.post(function='update_show_attendance', endpoint='attendance/add', params=params)
         elif update == 'remove':
-            return self.post(endpoint='attendance/remove', params=params)
+            return self.post(function='update_show_attendance',  endpoint='attendance/remove', params=params)
         else:
             raise PhishNetAPIError(
                 'update_show_attendance param not valid: {}'.format(update))
@@ -208,14 +196,7 @@ class PhishNetAPI(object):
             contains is a comma separated string of showid's
         :returns: json response object with a list of collections.
         """
-        params = kwargs.keys()
-        legal_params = ['collectionid', 'uid', 'contains']
-
-        if not len(params) > 0 and not set(params).issubset(set(legal_params)):
-            raise PhishNetAPIError(
-                'Invalid query params for collections/query, {}'.format(kwargs))
-
-        return self.post(endpoint='collections/query', params=kwargs)
+        return self.post(function='query_collections', endpoint='collections/query', params=kwargs)
 
     def get_collection(self, collection_id):
         """
@@ -223,7 +204,7 @@ class PhishNetAPI(object):
         :param collection_id: the collectionid associated with the collection.
         :returns: json object of a collection detail. - see tests/data/get_collection.json
         """
-        return self.post(endpoint='collections/get', params={'collectionid': collection_id})
+        return self.post(function='get_collection', endpoint='collections/get', params={'collectionid': collection_id})
 
     def get_all_jamcharts(self):
         """
@@ -231,7 +212,7 @@ class PhishNetAPI(object):
         from the /jamcharts/all endpoint.
         :return: json response object of all jamcharts - see tests/data/all_jamcharts.json
         """
-        return self.post(endpoint='jamcharts/all')
+        return self.post(function='get_all_jamcharts', endpoint='jamcharts/all')
 
     def get_jamchart(self, song_id):
         """
@@ -239,21 +220,21 @@ class PhishNetAPI(object):
         :param song_id: the songid associated with the jamchart.
         :returns: json object of a jamchart detail. - see tests/data/get_jamchart.json
         """
-        return self.post(endpoint='jamcharts/get', params={'songid': song_id})
+        return self.post(function='get_jamchart', endpoint='jamcharts/get', params={'songid': song_id})
 
     def get_all_people(self):
         """
         Get a list of personid, name, type, and a link to all shows in which a person is featured.
         :returns: json object of all people - see tests/data/all_people.json
         """
-        return self.post(endpoint='people/all')
+        return self.post(function='get_all_people', endpoint='people/all')
 
     def get_all_people_types(self):
         """
         Get a dict of all people types
         :returns: json object of all people types - see tests/data/all_people_types.json
         """
-        return self.post(endpoint='people/get')
+        return self.post(function='get_all_people_types', endpoint='people/get')
 
     def get_people_by_show(self, show_id):
         """
@@ -262,7 +243,7 @@ class PhishNetAPI(object):
         :returns: json object of a list of performers for a show.
             - see tests/data/people_by_show.json
         """
-        return self.post(endpoint='jamcharts/get', params={'songid': show_id})
+        return self.post(function='get_people_by_show', endpoint='jamcharts/get', params={'songid': show_id})
 
     def get_appearances(self, person_id, year=None):
         """
@@ -274,14 +255,9 @@ class PhishNetAPI(object):
         """
         params = {'personid': person_id}
         if year is not None:
-            current_year = date.today().year
-            if 1983 <= year <= current_year:
-                params['year'] = year
-            else:
-                raise ValueError(
-                    'Invalid year parameter (>=1983 <= {}) for people/appearances: {}'.format(current_year, year))
+            params['year'] = year
 
-        return self.post(endpoint='people/appearances', params=params)
+        return self.post(function='get_appearances', endpoint='people/appearances', params=params)
 
     def get_relationships(self, uid):
         """
@@ -289,7 +265,7 @@ class PhishNetAPI(object):
         :param uid: the uid associated with the relationship.
         :returns: json object of a user's relationships. - see tests/data/get_relationships.json
         """
-        return self.post(endpoint='relationships/get', params={'uid': uid})
+        return self.post(function='get_relationships', endpoint='relationships/get', params={'uid': uid})
 
     def query_reviews(self, **kwargs):
         """
@@ -306,26 +282,26 @@ class PhishNetAPI(object):
             raise PhishNetAPIError(
                 'Invalid query params for reviews/query, {}'.format(kwargs))
 
-        return self.post(endpoint='reviews/query', params=kwargs)
+        return self.post(function='query_reviews', endpoint='reviews/query', params=kwargs)
 
     def get_latest_setlist(self):
         """
         Get an array with the most recent Phish setlist
         :returns: json object of the latest setlist - see tests/data/latest_setlist.json
         """
-        return self.post(endpoint='setlists/latest')
+        return self.post(function='get_latest_setlist', endpoint='setlists/latest')
 
-    def get_setlist(self, show_id=None, show_date=None):
+    def get_setlist(self, showid=None, showdate=None):
         """
         Get an array with the Phish setlist that matches the showid or showdate.
         If both parameters are passed in, showid takes precedence. If no params are
         passed in then it returns the latest setlist.
         :returns: json object of matching setlist - see tests/data/latest_setlist.json
         """
-        if show_id is not None:
-            return self.post(endpoint='setlists/get', params={'showid': show_id})
-        elif show_date is not None:
-            return self.post(endpoint='setlists/get', params={'showdate': show_date})
+        if showid is not None:
+            return self.post(function='get_setlist', endpoint='setlists/get', params={'showid': showid})
+        elif showdate is not None:
+            return self.post(function='get_setlist', endpoint='setlists/get', params={'showdate': showdate})
         else:
             return self.get_latest_setlist()
 
@@ -334,42 +310,42 @@ class PhishNetAPI(object):
         Get an array with the 10 most recent Phish setlists
         :returns: json object of the 10 most recent setlist - see tests/data/recent_setlists.json
         """
-        return self.post(endpoint='setlists/recent')
+        return self.post(function='get_recent_setlists', endpoint='setlists/recent')
 
     def get_tiph_setlist(self):
         """
         Get an array with a random setlist from today's date (MM/DD) in Phish history
         :returns: json object of the setlist - see tests/data/tiph_setlist.json
         """
-        return self.post(endpoint='setlists/tiph')
+        return self.post(function='get_tiph_setlist', endpoint='setlists/tiph')
 
     def get_random_setlist(self):
         """
         Get an array with a random setlist in Phish history
         :returns: json object of the setlist - see tests/data/tiph_setlist.json
         """
-        return self.post(endpoint='setlist/random')
+        return self.post(function='get_random_setlist', endpoint='setlist/random')
 
     def get_in_progress_setlist(self):
         """
         Get the Most Recent Setlist, Including in Progress.
         :returns: json object of the setlist - see tests/data/tiph_setlist.json
         """
-        return self.post(endpoint='setlists/progress')
+        return self.post(function='get_in_progress_setlist', endpoint='setlists/progress')
 
     def get_show_links(self, show_id):
         """
         Get links associated with a show, including LivePhish links, Phish.net recaps, photos, and more.
         :returns: json object of show links - see tests/data/get_show_links.json
         """
-        return self.post(endpoint='shows/links', params={'showid': show_id})
+        return self.post(function='get_show_links', endpoint='shows/links', params={'showid': show_id})
 
     def get_upcoming_shows(self):
         """
         Get an array of upcoming shows.
         :returns: json object of upcoming shows - see tests/data/get_upcoming_shows.json
         """
-        return self.post(endpoint='shows/upcoming')
+        return self.post(function='get_upcoming_shows', endpoint='shows/upcoming')
 
     def query_shows(self, **kwargs):
         """
@@ -388,50 +364,25 @@ class PhishNetAPI(object):
             raise PhishNetAPIError(
                 'Invalid query params for reviews/query, {}'.format(kwargs))
 
-        current_year = date.today().year
-        if 'year' in params:
-            if not 1983 <= kwargs['year'] <= current_year:
-                raise ValueError(
-                    'Invalid year parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['year']))
+        for field in ['country', 'city', 'state']:
+            if field in params:
+                kwargs[field] = urllib.urlencode(kwargs[field])
 
-        if 'month' in params:
-            if not 1 <= kwargs['month'] <= 12:
-                raise ValueError(
-                    'Invalid month parameter (1 - 12) for shows/query: {}'.format(kwargs['month']))
+        return self.post(function='query_shows', endpoint='shows/query', params=kwargs)
 
-        if 'day' in params:
-            if not 1 <= kwargs['day'] <= 31:
-                raise ValueError(
-                    'Invalid month parameter (1 - 31) for shows/query: {}'.format(kwargs['day']))
-        if 'showdate_gt' in params:
-            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_gt'])
-        if 'showdate_gte' in params:
-            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_gte'])
-        if 'showdate_lt' in params:
-            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_lt'])
-        if 'showdate_lte' in params:
-            kwargs['showdate_gt'] = self.parse_date(kwargs['showdate_lte'])
+    @check_authkey
+    def get_user_details(self):
+        """
+        Returns an array of publically available details about a user. Requires
+        an authkey from an authorized user of your application. See authorize().
+        :return: json response object with confirmation of attendance update
+            - see tests/data/get_user.json
+        """
+        params = {'authkey': self.authkey, 'uid': self.uid}
+        return self.post(function='get_user_details', endpoint='user/get', params=params)
 
-        if 'showyear_gt' in params:
-            if 1983 > kwargs['showyear_gt'] > current_year:
-                raise ValueError(
-                    'Invalid showyear_gt parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyear_gt']))
-        if 'showyear_gte' in params:
-            if 1983 > kwargs['showyear_gte'] > current_year:
-                raise ValueError(
-                    'Invalid showyear_gte parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyear_gte']))
-        if 'showyear_lt' in params:
-            if 1983 > kwargs['showyear_lt'] > current_year:
-                raise ValueError(
-                    'Invalid showyear_lt parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyear_lt']))
-        if 'showyear_lte' in params:
-            if 1983 > kwargs['showyear_lte'] > current_year:
-                raise ValueError(
-                    'Invalid showyear_lte parameter (>=1983 <= {}) for shows/query: {}'.format(current_year, kwargs['showyearlte']))
-
-        return self.post(endpoint='shows/query', params=kwargs)
-
-    def post(self, endpoint, params={}, retry=DEFAULT_RETRY):
+    @validate_params
+    def post(self, function, endpoint, params=None, retry=DEFAULT_RETRY):
         """
         Get an item from the Phish.net API.
         :param endpoint: The REST endpoint to call. The endpoint is appended to the base URL.  
@@ -447,7 +398,7 @@ class PhishNetAPI(object):
 
         return response.json()
 
-    def _query(self, method, endpoint, params={}, retry=DEFAULT_RETRY):
+    def _query(self, method, endpoint, params=None, retry=DEFAULT_RETRY):
         """
         :param method: HTTP method to query the API.  Typically for Phish.net only GET or POST. POST recommended.
         :param endpoint: The path to call.  The path is appended to the base URL.  
@@ -455,6 +406,7 @@ class PhishNetAPI(object):
         :param retry: An integer describing how many times the request may be retried.
         """
         url = self.base_url + endpoint
+        params = {} if params is None else params
         try:
             return self._make_rest_call(method, url, params)
         except PhishNetAPIError:
@@ -464,7 +416,7 @@ class PhishNetAPI(object):
                 raise NumberRetriesExceeded(
                     "exceeded maximum retry count: {}".format(retry))
 
-    @check_api_key
+    @check_apikey
     def _make_rest_call(self, method, url, data):
         try:
             if method == 'GET':
@@ -492,15 +444,3 @@ class PhishNetAPI(object):
             raise HTTPError(exception)
 
         return response
-
-    @staticmethod
-    def parse_date(d):
-        if isinstance(d, date):
-            return str(d)
-        else:
-            try:
-                d = date.fromisoformat(d)
-            except TypeError:
-                raise ValueError(
-                    'Showdate {} could not be parsed into a date. Use YYYY-MM-DD format.'.format(d))
-            return str(d)
