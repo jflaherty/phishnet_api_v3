@@ -198,13 +198,13 @@ class PhishNetAPI(object):
         """
         return self.post(function='query_collections', endpoint='collections/query', params=kwargs)
 
-    def get_collection(self, collection_id):
+    def get_collection(self, collectionid):
         """
         Get the details of a collection from the /collections/get endpoint.
         :param collection_id: the collectionid associated with the collection.
         :returns: json object of a collection detail. - see tests/data/get_collection.json
         """
-        return self.post(function='get_collection', endpoint='collections/get', params={'collectionid': collection_id})
+        return self.post(function='get_collection', endpoint='collections/get', params={'collectionid': collectionid})
 
     def get_all_jamcharts(self):
         """
@@ -214,13 +214,13 @@ class PhishNetAPI(object):
         """
         return self.post(function='get_all_jamcharts', endpoint='jamcharts/all')
 
-    def get_jamchart(self, song_id):
+    def get_jamchart(self, songid):
         """
         Get the details of a jamchart from the /jamcharts/get endpoint.
         :param song_id: the songid associated with the jamchart.
         :returns: json object of a jamchart detail. - see tests/data/get_jamchart.json
         """
-        return self.post(function='get_jamchart', endpoint='jamcharts/get', params={'songid': song_id})
+        return self.post(function='get_jamchart', endpoint='jamcharts/get', params={'songid': songid})
 
     def get_all_people(self):
         """
@@ -236,16 +236,16 @@ class PhishNetAPI(object):
         """
         return self.post(function='get_all_people_types', endpoint='people/get')
 
-    def get_people_by_show(self, show_id):
+    def get_people_by_show(self, showid):
         """
         Get list of performers at a show from the /people/byshow endpoint.
         :param show_id: the showid associated with the show.
         :returns: json object of a list of performers for a show.
             - see tests/data/people_by_show.json
         """
-        return self.post(function='get_people_by_show', endpoint='jamcharts/get', params={'songid': show_id})
+        return self.post(function='get_people_by_show', endpoint='jamcharts/get', params={'songid': showid})
 
-    def get_appearances(self, person_id, year=None):
+    def get_appearances(self, personid, year=None):
         """
         Get list of appearances for a particular performer from the /people/appearances endpoint.
         :param person_id: the personid associated with the appearances.
@@ -253,7 +253,7 @@ class PhishNetAPI(object):
         :returns: json object of a list of appearances for a performer.
             - see tests/data/get_appearances.json
         """
-        params = {'personid': person_id}
+        params = {'personid': personid}
         if year is not None:
             params['year'] = year
 
@@ -333,12 +333,12 @@ class PhishNetAPI(object):
         """
         return self.post(function='get_in_progress_setlist', endpoint='setlists/progress')
 
-    def get_show_links(self, show_id):
+    def get_show_links(self, showid):
         """
         Get links associated with a show, including LivePhish links, Phish.net recaps, photos, and more.
         :returns: json object of show links - see tests/data/get_show_links.json
         """
-        return self.post(function='get_show_links', endpoint='shows/links', params={'showid': show_id})
+        return self.post(function='get_show_links', endpoint='shows/links', params={'showid': showid})
 
     def get_upcoming_shows(self):
         """
@@ -380,6 +380,21 @@ class PhishNetAPI(object):
         """
         params = {'authkey': self.authkey, 'uid': self.uid}
         return self.post(function='get_user_details', endpoint='user/get', params=params)
+
+    def get_all_venues(self):
+        """
+        Returns an array of venues. 
+        :return: json response object with all venues - see tests/data/all_venues.json.
+        """
+        return self.post(function='get_all_venues', endpoint='venues/all')
+
+    def get_venue(self, venueid):
+        """
+        returns an array of values, including geographical location about a single venue and, 
+        if its an alias, the current name.
+        :return: json response object with the details abount a venue -- see tests/data/get_venue.json
+        """
+        return self.post(function='get_venue', endpoint='venues/get', params={'venueid': venueid})
 
     @validate_params
     def post(self, function, endpoint, params=None, retry=DEFAULT_RETRY):

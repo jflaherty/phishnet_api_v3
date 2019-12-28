@@ -349,3 +349,24 @@ class TestPhishnetAPI:
             api.query_shows(day=32)
         with pytest.raises(ParamValidationError):
             api.query_shows(showdate_gt=1982)
+
+    def test_get_all_venues(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/all_venues.json') as f:
+            all_venues_json = json.load(f)
+        requests_mock.post(api.base_url + "venues/all", json=all_venues_json)
+
+        venues_response = api.get_all_venues()
+        assert venues_response['response']['count'] == 3
+        assert len(venues_response['response']['data']) == 3
+        assert venues_response['response']['data']['1']['venueid'] == 1
+
+    def test_get_venue(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_venue.json') as f:
+            get_venue_json = json.load(f)
+        requests_mock.post(api.base_url + "venues/get", json=get_venue_json)
+
+        venue_response = api.get_venue(1)
+        assert venue_response['response']['count'] == 9
+        assert venue_response['response']['data']['venueid'] == 1

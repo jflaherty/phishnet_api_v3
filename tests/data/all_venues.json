@@ -1,0 +1,33 @@
+{
+    "error_code": 0,
+    "error_message": null,
+    "response": {
+        "count": 3,
+        "data": {
+            "1": {
+                "venueid": 1,
+                "venue": "Meadows Music Theatre",
+                "city": "Hartford",
+                "state": "CT",
+                "country": "USA",
+                "link": "http://phish.net/venue/1/Meadows_Music_Theatre"
+            },
+            "2": {
+                "venueid": 2,
+                "venue": "Nectar's",
+                "city": "Burlington",
+                "state": "VT",
+                "country": "USA",
+                "link": "http://phish.net/venue/2/Nectar%27s"
+            },
+            "3": {
+                "venueid": 3,
+                "venue": "Alpine Valley Music Theatre",
+                "city": "East Troy",
+                "state": "WI",
+                "country": "USA",
+                "link": "http://phish.net/venue/3/Alpine_Valley_Music_Theatre"
+            }
+        }
+    }
+}
