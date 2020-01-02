@@ -24,17 +24,19 @@ import logging
 from pwd import *
 from phishnet_api_v3.decorators import *
 from phishnet_api_v3.exceptions import *
+from phishnet_api_v3.settings import *
 
 
 class PhishNetAPI(object):
+
     DEFAULT_VERSION = 'v3'
     DEFAULT_RETRY = 3
 
-    def __init__(self, apikey, base_url='https://api.phish.net/',
-                 version=DEFAULT_VERSION, verify_ssl_certificate=True, timeout=60, log_level='WARNING'):
+    def __init__(self, apikey=APIKEY, base_url='https://api.phish.net/',
+                 verify_ssl_certificate=True, timeout=60, log_level='WARNING'):
         """
         :param apikey: Your application's pre-assigned API key. This parameter is required for all public API
-            methods.
+            methods. If not passed 
         :param base_url: The base URL to invoke API calls from.  Defaults the the standard phish.net API base.
         :param version: A string with the API version. This client targets version v3. If you do not pass this variable
             it will default to the current version of the API, which may yield unexpected results. The current version
@@ -48,12 +50,10 @@ class PhishNetAPI(object):
         """
 
         self.apikey = apikey
-        self.version = version
-        self.format = format
         if not base_url.endswith('/'):
-            self.base_url = base_url + '/' + self.version + '/'
+            self.base_url = base_url + '/' + self.DEFAULT_VERSION + '/'
         else:
-            self.base_url = base_url + self.version + '/'
+            self.base_url = base_url + self.DEFAULT_VERSION + '/'
 
         numeric_level = getattr(logging, log_level.upper(), None)
         if not isinstance(numeric_level, int):
@@ -65,9 +65,10 @@ class PhishNetAPI(object):
         self.session = requests.session()
         self.uid = None
         self.authkey = None
-        self.appid = None
+        self.appid = APPID
+        self.private_salt = PRIVATE_SALT
 
-    def authorize(self, uid, private_salt):
+    def authorize(self, uid, private_salt=None):
         """
         Authorize the current instance to be able to make privileged API calls on behalf of a selected user.
         In order to use this method, The phish.net registered user must have gone to
@@ -75,12 +76,20 @@ class PhishNetAPI(object):
         thier authkey via the authority/get endpoint.
 
         :param uid: The uid to authorize on behalf of.
-        :param private_salt: The private_salt associated with the apikey.
+        :param private_salt: The private_salt associated with the apikey. If None, will check 
+        environment variable (set either via the OS environment or .env file.)
         """
-        self.authkey = self.get_authkey(uid, private_salt)
+        if private_salt is None:
+            if not self.private_salt:
+                raise ParamValidationError(
+                    'private_salt param missing or not defined via os.getenv')
+        else:
+            self.private_salt = private_salt
+
+        self.authkey = self.get_authkey(uid)
         self.uid = uid
 
-    def get_authkey(self, uid, private_salt):
+    def get_authkey(self, uid):
         """
         This method will handle negotiation of the authorization for a user.
         :param uid: The uid to fetch the authkey on behalf of.
@@ -91,9 +100,9 @@ class PhishNetAPI(object):
         if self.uid == uid and self.authkey:
             return self.authkey
         else:
-            return self._authority_get(uid, private_salt)
+            return self._authority_get(uid)
 
-    def _authority_get(self, uid, private_salt):
+    def _authority_get(self, uid):
         """
         Retrieves the authkey of a user who has already been authorized for your application.
         :param uid: The uid of the registered phish.net user you want to authorize
@@ -102,9 +111,8 @@ class PhishNetAPI(object):
             app is not authorized, the method will return 0.
         """
         self.uid = uid
-        md5_str = private_salt + self.apikey + str(self.uid)
+        md5_str = self.private_salt + self.apikey + str(self.uid)
         unique_hash = hashlib.md5(md5_str.encode()).hexdigest()
-        print('unique_hash: ' + unique_hash)
         params = {
             'apikey': self.apikey,
             'uid': uid,
@@ -145,7 +153,7 @@ class PhishNetAPI(object):
 
         return self.post(function='get_blogs', endpoint='blog/get', params=kwargs)
 
-    def get_all_artists(self):
+    def get_artists(self):
         """
         The artists/all endpoint returns an array of artists whose setlists are tracked
         in the Phish.net setlist database, along with the associated artistid.
@@ -171,16 +179,18 @@ class PhishNetAPI(object):
         return self.post(function='V', endpoint='attendance/get', params=kwargs)
 
     @check_authkey
-    def update_show_attendance(self, showid, update):
+    def update_show_attendance(self, uid, showid, update):
         """
         update your attendance to a specific show (add or remove) via the
         /attendance/add and /attendance/remove endpoints.
-        :param show_id: the show id associated with the show you want to update
+        :param uid: the userid associated with the update. Defaults to current uid 
+            stored in the object (self)
+        :param showid: the show id associated with the show you want to update
         :param update: either 'add' or 'remove'.
         :return: json response object with confirmation of attendance update
             - see tests/data/add_attendance.json and remove_attendance.json
         """
-        params = {'authkey': self.authkey, 'showid': showid, 'uid': self.uid}
+        params = {'authkey': self.authkey, 'showid': showid, 'uid': uid}
         if update == 'add':
             return self.post(function='update_show_attendance', endpoint='attendance/add', params=params)
         elif update == 'remove':
@@ -224,14 +234,15 @@ class PhishNetAPI(object):
 
     def get_all_people(self):
         """
-        Get a list of personid, name, type, and a link to all shows in which a person is featured.
+        Get a list of personid, name, type, and a link to all shows in which a person is featured
+        from the people/all endpoint.
         :returns: json object of all people - see tests/data/all_people.json
         """
         return self.post(function='get_all_people', endpoint='people/all')
 
     def get_all_people_types(self):
         """
-        Get a dict of all people types
+        Get a dict of all people types from the people/get endpoint.
         :returns: json object of all people types - see tests/data/all_people_types.json
         """
         return self.post(function='get_all_people_types', endpoint='people/get')
@@ -243,7 +254,7 @@ class PhishNetAPI(object):
         :returns: json object of a list of performers for a show.
             - see tests/data/people_by_show.json
         """
-        return self.post(function='get_people_by_show', endpoint='jamcharts/get', params={'songid': showid})
+        return self.post(function='get_people_by_show', endpoint='people/byshow', params={'showid': showid})
 
     def get_appearances(self, personid, year=None):
         """
@@ -371,14 +382,16 @@ class PhishNetAPI(object):
         return self.post(function='query_shows', endpoint='shows/query', params=kwargs)
 
     @check_authkey
-    def get_user_details(self):
+    def get_user_details(self, uid=None):
         """
         Returns an array of publically available details about a user. Requires
         an authkey from an authorized user of your application. See authorize().
-        :return: json response object with confirmation of attendance update
-            - see tests/data/get_user.json
+        :return: json response object with details for a registered phish.net user.
         """
-        params = {'authkey': self.authkey, 'uid': self.uid}
+        if uid is None:
+            uid = self.uid
+
+        params = {'authkey': self.authkey, 'uid': uid}
         return self.post(function='get_user_details', endpoint='user/get', params=params)
 
     def get_all_venues(self):

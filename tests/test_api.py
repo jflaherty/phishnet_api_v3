@@ -13,7 +13,7 @@ import pytest
 
 # local imports
 from phishnet_api_v3.api_client import PhishNetAPI
-from phishnet_api_v3.exceptions import ParamValidationError
+from phishnet_api_v3.exceptions import ParamValidationError, PhishNetAPIError
 from phishnet_api_v3 import __version__
 
 
@@ -21,7 +21,7 @@ def test_version():
     assert __version__ == '0.1.0'
 
 
-class TestPhishnetAPI:
+class TestMockPhishNetAPI:
 
     def test_authorize(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
@@ -56,13 +56,13 @@ class TestPhishnetAPI:
             api.get_blogs(year=2008)
             api.get_blogs(year=2020)
 
-    def test_get_all_artists(self, requests_mock):
+    def test_get_artists(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
         with open('tests/data/all_artists.json') as f:
             all_artists_json = json.load(f)
         requests_mock.post(api.base_url + "artists/all", json=all_artists_json)
 
-        artists_response = api.get_all_artists()
+        artists_response = api.get_artists()
         assert artists_response['response']['count'] == 5
         assert len(artists_response['response']['data']) == 5
         assert artists_response['response']['data']['1']['artistid'] == 1
@@ -92,7 +92,7 @@ class TestPhishnetAPI:
                            json=add_attendance_json)
 
         update_attendance_response = api.update_show_attendance(
-            1252691618, 'add')
+            api.uid, 1252691618, 'add')
         assert update_attendance_response['error_message'] == "Successfully added 1997-11-30"
         assert update_attendance_response['response']['data']['action'] == 'add'
         assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
@@ -106,7 +106,7 @@ class TestPhishnetAPI:
                            json=remove_attendance_json)
 
         update_attendance_response = api.update_show_attendance(
-            1252691618, 'remove')
+            api.uid, 1252691618, 'remove')
         assert update_attendance_response['error_message'] == "Successfully removed 1997-11-30"
         assert update_attendance_response['response']['data']['action'] == 'remove'
         assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
@@ -370,3 +370,14 @@ class TestPhishnetAPI:
         venue_response = api.get_venue(1)
         assert venue_response['response']['count'] == 9
         assert venue_response['response']['data']['venueid'] == 1
+
+
+@pytest.mark.integration
+class TestPhishNetAPI:
+
+    def test_get_user_details(self):
+        api = PhishNetAPI()
+        response = api.get_user_details(80)
+        assert response['response']['count'] == 1
+        # with pytest.raises(PhishNetAPIError):
+        #    response = api.get_user_details(1)
