@@ -1,9 +1,0 @@
-{
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.pythonPath": "/home/fty/.cache/pypoetry/virtualenvs/phishnet-api-v3-ROtvOTC8-py3.8/bin/python"
-}
