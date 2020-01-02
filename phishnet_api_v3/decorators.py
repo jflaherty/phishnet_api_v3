@@ -24,7 +24,7 @@ def check_apikey(f):
 
 def check_authkey(f):
     def wrapper(*args, **kwargs):
-        if not args[0].authkey and not args[0].uid == args[1]:
+        if not args[0].authkey or not args[0].uid == args[1]:
             args[0].authorize(args[1])
         return f(*args, **kwargs)
     return wrapper

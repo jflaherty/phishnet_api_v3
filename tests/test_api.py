@@ -10,6 +10,7 @@
 
 import json
 import pytest
+import os
 
 # local imports
 from phishnet_api_v3.api_client import PhishNetAPI
@@ -372,8 +373,303 @@ class TestMockPhishNetAPI:
         assert venue_response['response']['data']['venueid'] == 1
 
 
-@pytest.mark.integration
+# @pytest.mark.integration
 class TestPhishNetAPI:
+
+    def test_authorize(self):
+        api = PhishNetAPI()
+        api.authorize(os.getenv("UID"))
+
+        assert api.uid == os.getenv("UID")
+        assert api.apikey == os.getenv("APIKEY")
+        assert api.appid == int(os.getenv("APPID"))
+        assert api.private_salt == os.getenv("PRIVATE_SALT")
+        assert 18 <= len(api.authkey) <= 19
+
+    def test_get_recent_blogs(self):
+        api = PhishNetAPI()
+        blogs_response = api.get_recent_blogs()
+
+        assert blogs_response['error_code'] == 0
+        assert blogs_response['response']['count'] == len(
+            blogs_response['response']['data'])
+
+    def test_get_blogs(self):
+        api = PhishNetAPI()
+        blogs_response = api.get_blogs(year=2009)
+
+        assert blogs_response['error_code'] == 0
+        assert blogs_response['response']['count'] == len(
+            blogs_response['response']['data'])
+
+        with pytest.raises(ParamValidationError):
+            api.get_blogs(year=2008)
+            api.get_blogs(year=2020)
+
+    def test_get_artists(self):
+        api = PhishNetAPI()
+        artists_response = api.get_artists()
+
+        assert artists_response['error_code'] == 0
+        assert artists_response['response']['count'] == len(
+            artists_response['response']['data'])
+        assert artists_response['response']['data']['1']['artistid'] == 1
+
+    def test_get_show_attendees(self):
+        api = PhishNetAPI()
+        attendees_response = api.get_show_attendees(showdate='1991-07-19')
+
+        assert attendees_response['error_code'] == 0
+        assert attendees_response['response']['count'] == len(
+            attendees_response['response']['data'])
+        with pytest.raises(ParamValidationError):
+            api.get_show_attendees(showdate='1991-13-19')
+            api.get_show_attendees(showdate='1982-12-19')
+            api.get_show_attendees(showid=0)
+
+    def test_update_show_attendance(self):
+        api = PhishNetAPI()
+        api.uid = os.getenv('UID')
+        update_attendance_response = api.update_show_attendance(
+            api.uid, 1252691618, 'add')
+
+        assert update_attendance_response['error_code'] == 0
+        assert update_attendance_response['error_message'] == "Successfully added 1997-11-30"
+        assert update_attendance_response['response']['data']['action'] == 'add'
+        assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
+        assert update_attendance_response['response']['data']['showid'] == 1252691618
+        shows_seen_after_add = int(
+            update_attendance_response['response']['data']['shows_seen'])
+
+        update_attendance_response = api.update_show_attendance(
+            api.uid, 1252691618, 'remove')
+
+        assert update_attendance_response['error_code'] == 0
+        assert update_attendance_response['error_message'] == "Successfully removed 1997-11-30"
+        shows_seen_after_remove = int(
+            update_attendance_response['response']['data']['shows_seen'])
+        assert shows_seen_after_add > shows_seen_after_remove
+        assert update_attendance_response['response']['data']['action'] == 'remove'
+        assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
+        assert update_attendance_response['response']['data']['showid'] == 1252691618
+
+    def test_query_collections(self):
+        api = PhishNetAPI()
+        collections_response = api.query_collections(uid=1)
+
+        assert collections_response['error_code'] == 0
+        assert collections_response['response']['count'] == len(
+            collections_response['response']['data'])
+
+    def test_get_collection(self):
+        api = PhishNetAPI()
+        collection_response = api.get_collection(1294148902)
+
+        assert collection_response['error_code'] == 0
+        assert collection_response['response']['data']['show_count'] == len(
+            collection_response['response']['data']['shows'])
+
+    def test_get_all_jamcharts(self):
+        api = PhishNetAPI()
+        jamcharts_response = api.get_all_jamcharts()
+
+        assert jamcharts_response['error_code'] == 0
+        assert jamcharts_response['response']['count'] == len(
+            jamcharts_response['response']['data'])
+
+    def test_get_jamchart(self):
+        api = PhishNetAPI()
+        jamchart_response = api.get_jamchart(7)
+
+        assert jamchart_response['error_code'] == 0
+        assert jamchart_response['response']['data']['songid'] == 7
+        assert jamchart_response['response']['count'] == len(
+            jamchart_response['response']['data'])
+
+    def test_get_all_people(self):
+        api = PhishNetAPI()
+        people_response = api.get_all_people()
+
+        assert people_response['error_code'] == 0
+        assert people_response['response']['count'] == len(
+            people_response['response']['data'])
+
+    @pytest.mark.skip(reason="currently returning an empty response from api.phish.net")
+    def test_get_all_people_types(self):
+        api = PhishNetAPI()
+        people_types_response = api.get_all_people_types()
+
+        assert people_types_response['error_code'] == 0
+        assert people_types_response['response']['count'] == len(
+            people_types_response['response']['data'].keys())
+        assert people_types_response['response']['data']["1"] == "The Band"
+
+    def test_get_appearances(self):
+        api = PhishNetAPI()
+        appearances_response = api.get_appearances(79)
+
+        assert appearances_response['error_code'] == 0
+        assert appearances_response['response']['count'] == len(
+            appearances_response['response']['data'])
+        assert appearances_response['response']['data'][0]['personid'] == 79
+
+        with pytest.raises(ParamValidationError):
+            api.get_appearances(79, 1982)
+
+    def test_get_relationships(self):
+        api = PhishNetAPI()
+        relationships_response = api.get_relationships(1)
+
+        assert relationships_response['error_code'] == 0
+        assert relationships_response['response']['count'] == len(
+            relationships_response['response']['data'].keys())
+
+    def test_query_reviews(self):
+        api = PhishNetAPI()
+        reviews_response = api.query_reviews(showid=1394573037)
+
+        assert reviews_response['error_code'] == 0
+        assert reviews_response['response']['count'] == len(
+            reviews_response['response']['data'])
+
+    def test_get_latest_setlist(self):
+        api = PhishNetAPI()
+        latest_setlist_response = api.get_latest_setlist()
+
+        assert latest_setlist_response['error_code'] == 0
+        assert latest_setlist_response['response']['count'] == len(
+            latest_setlist_response['response']['data'])
+
+    def test_get_setlist(self):
+        api = PhishNetAPI()
+        setlist_response = api.get_setlist(showid=1252698446)
+
+        assert setlist_response['error_code'] == 0
+        assert setlist_response['response']['count'] == 1
+        assert len(setlist_response['response']['data']) == 1
+        assert setlist_response['response']['data'][0]['showid'] == 1252698446
+        assert setlist_response['response']['data'][0]['showdate'] == '1997-12-29'
+        assert setlist_response['response']['data'][0]['rating'] == '4.5907'
+        assert setlist_response['response']['data'][0]['location'] == 'New York, NY, USA'
+
+        get_setlists_response = api.get_setlist(showdate='1997-12-29')
+        assert get_setlists_response['response']['count'] == 1
+        assert len(get_setlists_response['response']['data']) == 1
+        assert get_setlists_response['response']['data'][0]['showid'] == 1252698446
+
+    def test_get_latest_setlist(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/latest_setlist.json') as f:
+            latest_setlist_json = json.load(f)
+        requests_mock.post(api.base_url + "setlists/latest",
+                           json=latest_setlist_json)
+
+        latest_setlists_response = api.get_latest_setlist()
+        assert latest_setlists_response['response']['count'] == 1
+        assert len(latest_setlists_response['response']['data']) == 1
+        assert latest_setlists_response['response']['data'][0]['showid'] == 1252698446
+
+    def test_get_recent_setlists(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/recent_setlists.json') as f:
+            get_recent_setlists_json = json.load(f)
+        requests_mock.post(api.base_url + "setlists/recent",
+                           json=get_recent_setlists_json)
+
+        recent_setlists_response = api.get_recent_setlists()
+        assert recent_setlists_response['response']['count'] == 10
+        assert len(recent_setlists_response['response']['data']) == 10
+        assert recent_setlists_response['response']['data'][0]['showid'] == 1470183033
+
+    def test_get_tiph_setlist(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/tiph_setlist.json') as f:
+            get_tiph_setlist_json = json.load(f)
+        requests_mock.post(api.base_url + "setlists/tiph",
+                           json=get_tiph_setlist_json)
+
+        tiph_setlist_response = api.get_tiph_setlist()
+        assert tiph_setlist_response['response']['count'] == 1
+        assert len(tiph_setlist_response['response']['data']) == 1
+        assert tiph_setlist_response['response']['data'][0]['showid'] == 1253165475
+
+    def test_get_random_setlist(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/tiph_setlist.json') as f:
+            get_random_setlist_json = json.load(f)
+        requests_mock.post(api.base_url + "setlist/random",
+                           json=get_random_setlist_json)
+
+        random_setlist_response = api.get_random_setlist()
+        assert random_setlist_response['response']['count'] == 1
+        assert len(random_setlist_response['response']['data']) == 1
+        assert random_setlist_response['response']['data'][0]['showid'] == 1253165475
+
+    def test_get_show_links(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_show_links.json') as f:
+            get_show_links_json = json.load(f)
+        requests_mock.post(api.base_url + "shows/links",
+                           json=get_show_links_json)
+
+        show_links_response = api.get_show_links(1394573037)
+        assert show_links_response['response']['count'] == 4
+        assert len(show_links_response['response']['data']) == 4
+        assert show_links_response['response']['data'][0]['type'] == "Photos"
+
+    def test_get_upcoming_shows(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_upcoming_shows.json') as f:
+            get_upcoming_shows_json = json.load(f)
+        requests_mock.post(api.base_url + "shows/upcoming",
+                           json=get_upcoming_shows_json)
+
+        upcoming_shows_response = api.get_upcoming_shows()
+        assert upcoming_shows_response['response']['count'] == 17
+        assert len(upcoming_shows_response['response']['data']) == 17
+        assert upcoming_shows_response['response']['data'][0]['showid'] == 1470182793
+
+    def test_query_shows(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/query_shows.json') as f:
+            query_shows_json = json.load(f)
+        requests_mock.post(api.base_url + "shows/query",
+                           json=query_shows_json)
+
+        query_shows_response = api.query_shows(tourid=37)
+        assert query_shows_response['response']['count'] == 14
+        assert len(query_shows_response['response']['data']) == 14
+        assert query_shows_response['response']['data'][0]['showid'] == 1252691618
+
+        with pytest.raises(ParamValidationError):
+            api.query_shows(year=1982)
+        with pytest.raises(ParamValidationError):
+            api.query_shows(month=13)
+        with pytest.raises(ParamValidationError):
+            api.query_shows(day=32)
+        with pytest.raises(ParamValidationError):
+            api.query_shows(showdate_gt=1982)
+
+    def test_get_all_venues(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/all_venues.json') as f:
+            all_venues_json = json.load(f)
+        requests_mock.post(api.base_url + "venues/all", json=all_venues_json)
+
+        venues_response = api.get_all_venues()
+        assert venues_response['response']['count'] == 3
+        assert len(venues_response['response']['data']) == 3
+        assert venues_response['response']['data']['1']['venueid'] == 1
+
+    def test_get_venue(self, requests_mock):
+        api = PhishNetAPI('apikey123456789test1')
+        with open('tests/data/get_venue.json') as f:
+            get_venue_json = json.load(f)
+        requests_mock.post(api.base_url + "venues/get", json=get_venue_json)
+
+        venue_response = api.get_venue(1)
+        assert venue_response['response']['count'] == 9
+        assert venue_response['response']['data']['venueid'] == 1
 
     def test_get_user_details(self):
         api = PhishNetAPI()

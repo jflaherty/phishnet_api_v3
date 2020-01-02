@@ -176,7 +176,7 @@ class PhishNetAPI(object):
         if not len(params) > 0 and not set(params).issubset(set(legal_params)):
             raise PhishNetAPIError("show_id or show_date required")
 
-        return self.post(function='V', endpoint='attendance/get', params=kwargs)
+        return self.post(function='get_show_attendees', endpoint='attendance/get', params=kwargs)
 
     @check_authkey
     def update_show_attendance(self, uid, showid, update):
@@ -382,14 +382,12 @@ class PhishNetAPI(object):
         return self.post(function='query_shows', endpoint='shows/query', params=kwargs)
 
     @check_authkey
-    def get_user_details(self, uid=None):
+    def get_user_details(self, uid):
         """
         Returns an array of publically available details about a user. Requires
         an authkey from an authorized user of your application. See authorize().
         :return: json response object with details for a registered phish.net user.
         """
-        if uid is None:
-            uid = self.uid
 
         params = {'authkey': self.authkey, 'uid': uid}
         return self.post(function='get_user_details', endpoint='user/get', params=params)
