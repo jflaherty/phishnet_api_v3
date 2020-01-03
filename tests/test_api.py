@@ -23,16 +23,20 @@ def test_version():
 
 
 class TestMockPhishNetAPI:
+    '''
+    These tests are live integration tests that will be run everytime pytest is run.
+    They use request_mock to mock the REST API calls.
+    '''
 
     def test_authorize(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
         with open('tests/data/authority.json') as f:
             authority_json = json.load(f)
         requests_mock.post(api.base_url + "authority/get", json=authority_json)
-        api.authorize(15, '123456789abcdefghij')
-        assert api.uid == 15
-        assert api.authkey == "B6386A2485D94C73DAA"
+        api.authorize(80, '123456789abcdefghij')
+        assert api.uid == 80
         assert api.appid == 12345
+        assert api.authkey == "B6386A2485D94C73DAA"
 
     def test_get_recent_blogs(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
@@ -85,15 +89,15 @@ class TestMockPhishNetAPI:
 
     def test_update_show_attendance(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
-        api.auth_key = 'B6386A2485D94C73DAA'
-        api.uid = 15
+        api.authkey = 'B6386A2485D94C73DAA'
+        api.uid = 80
         with open('tests/data/add_attendance.json') as f:
             add_attendance_json = json.load(f)
         requests_mock.post(api.base_url + "attendance/add",
                            json=add_attendance_json)
 
         update_attendance_response = api.update_show_attendance(
-            api.uid, 1252691618, 'add')
+            api.uid, showid=1252691618, update='add')
         assert update_attendance_response['error_message'] == "Successfully added 1997-11-30"
         assert update_attendance_response['response']['data']['action'] == 'add'
         assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
@@ -107,7 +111,7 @@ class TestMockPhishNetAPI:
                            json=remove_attendance_json)
 
         update_attendance_response = api.update_show_attendance(
-            api.uid, 1252691618, 'remove')
+            api.uid, showid=1252691618, update='remove')
         assert update_attendance_response['error_message'] == "Successfully removed 1997-11-30"
         assert update_attendance_response['response']['data']['action'] == 'remove'
         assert update_attendance_response['response']['data']['showdate'] == '1997-11-30'
@@ -228,18 +232,6 @@ class TestMockPhishNetAPI:
         assert reviews_response['response']['count'] == 1
         assert len(reviews_response['response']['data']) == 1
         assert reviews_response['response']['data'][0]['reviewid'] == 1375467602
-
-    def test_get_latest_setlist(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/latest_setlist.json') as f:
-            latest_setlist_json = json.load(f)
-        requests_mock.post(api.base_url + "setlists/latest",
-                           json=latest_setlist_json)
-
-        latest_setlist_response = api.get_latest_setlist()
-        assert latest_setlist_response['response']['count'] == 1
-        assert len(latest_setlist_response['response']['data']) == 1
-        assert latest_setlist_response['response']['data'][0]['showid'] == 1252698446
 
     def test_get_setlist(self, requests_mock):
         api = PhishNetAPI('apikey123456789test1')
@@ -373,7 +365,7 @@ class TestMockPhishNetAPI:
         assert venue_response['response']['data']['venueid'] == 1
 
 
-# @pytest.mark.integration
+@pytest.mark.integration
 class TestPhishNetAPI:
     '''
     These tests are live integration tests that require a valid apikey, appid, private_salt, and a 
@@ -438,7 +430,7 @@ class TestPhishNetAPI:
         api = PhishNetAPI()
         api.uid = os.getenv('UID')
         update_attendance_response = api.update_show_attendance(
-            api.uid, 1252691618, 'add')
+            api.uid, showid=1252691618, update='add')
 
         assert update_attendance_response['error_code'] == 0
         assert update_attendance_response['error_message'] == "Successfully added 1997-11-30"
@@ -449,7 +441,7 @@ class TestPhishNetAPI:
             update_attendance_response['response']['data']['shows_seen'])
 
         update_attendance_response = api.update_show_attendance(
-            api.uid, 1252691618, 'remove')
+            api.uid, showid=1252691618, update='remove')
 
         assert update_attendance_response['error_code'] == 0
         assert update_attendance_response['error_message'] == "Successfully removed 1997-11-30"
@@ -501,7 +493,6 @@ class TestPhishNetAPI:
         assert people_response['response']['count'] == len(
             people_response['response']['data'])
 
-    @pytest.mark.skip(reason="currently returning an empty response from api.phish.net")
     def test_get_all_people_types(self):
         api = PhishNetAPI()
         people_types_response = api.get_all_people_types()
@@ -616,7 +607,7 @@ class TestPhishNetAPI:
         assert query_shows_response['error_code'] == 0
         assert query_shows_response['response']['count'] == 21
         assert len(query_shows_response['response']['data']) == 21
-        assert query_shows_response['response']['data'][0]['showid'] == 1252683880
+        assert query_shows_response['response']['data'][0]['showid'] == 1252697421
 
         with pytest.raises(ParamValidationError):
             api.query_shows(year=1982)

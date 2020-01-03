@@ -65,7 +65,7 @@ class PhishNetAPI(object):
         self.session = requests.session()
         self.uid = None
         self.authkey = None
-        self.appid = APPID
+        self.appid = None
         self.private_salt = PRIVATE_SALT
 
     def authorize(self, uid, private_salt=None):
@@ -122,7 +122,6 @@ class PhishNetAPI(object):
         response = self.post(function='_authority_get',
                              endpoint=endpoint, params=params)
         self.appid = response['response']['data']['appid']
-        print(response['response']['data'])
         return response['response']['data']['authkey']
 
     def get_recent_blogs(self):
@@ -179,18 +178,24 @@ class PhishNetAPI(object):
         return self.post(function='get_show_attendees', endpoint='attendance/get', params=kwargs)
 
     @check_authkey
-    def update_show_attendance(self, uid, showid, update):
+    def update_show_attendance(self, uid, showid=None, update=None):
         """
         update your attendance to a specific show (add or remove) via the
         /attendance/add and /attendance/remove endpoints.
         :param uid: the userid associated with the update. Defaults to current uid 
             stored in the object (self)
         :param showid: the show id associated with the show you want to update
+        :param showdate: the show date (YYYY-MM-DD) associated with the show you want to update
         :param update: either 'add' or 'remove'.
         :return: json response object with confirmation of attendance update
             - see tests/data/add_attendance.json and remove_attendance.json
         """
+        if showid is None:
+            raise PhishNetAPIError(
+                "showid or showdate required for update_show_attendance()")
+
         params = {'authkey': self.authkey, 'showid': showid, 'uid': uid}
+
         if update == 'add':
             return self.post(function='update_show_attendance', endpoint='attendance/add', params=params)
         elif update == 'remove':
@@ -381,7 +386,6 @@ class PhishNetAPI(object):
 
         return self.post(function='query_shows', endpoint='shows/query', params=kwargs)
 
-    @check_authkey
     def get_user_details(self, uid):
         """
         Returns an array of publically available details about a user. Requires
@@ -389,7 +393,7 @@ class PhishNetAPI(object):
         :return: json response object with details for a registered phish.net user.
         """
 
-        params = {'authkey': self.authkey, 'uid': uid}
+        params = {'uid': uid}
         return self.post(function='get_user_details', endpoint='user/get', params=params)
 
     def get_all_venues(self):
@@ -420,7 +424,7 @@ class PhishNetAPI(object):
         #    response.text, object_hook=lambda d: Namespace(**d))
         if(response.json()['error_code'] > 0):
             raise PhishNetAPIError(
-                'phish.net API error: {}'.format(endpoint, response.json()['error_code'], response.json()['error_message']))
+                'phish.net API error: {}, {}, {}'.format(endpoint, response.json()['error_code'], response.json()['error_message']))
 
         return response.json()
 
