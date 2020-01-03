@@ -375,6 +375,13 @@ class TestMockPhishNetAPI:
 
 # @pytest.mark.integration
 class TestPhishNetAPI:
+    '''
+    These tests are live integration tests that require a valid apikey, appid, private_salt, and a 
+    valid phish.net uid that has given authorization to run authorized api calls to api.phish.net
+    for you application associated with the apikey. These are extracted from either OS environment 
+    variables (APIKEY, APPID, PRIVATE_SALT, UID) or via a .env file at the root of this project 
+    (see .env.SAMPLE for an example.) To run these test for this class pass --integration to pytest.
+    '''
 
     def test_authorize(self):
         api = PhishNetAPI()
@@ -553,93 +560,63 @@ class TestPhishNetAPI:
         assert setlist_response['response']['data'][0]['location'] == 'New York, NY, USA'
 
         get_setlists_response = api.get_setlist(showdate='1997-12-29')
+
+        assert setlist_response['error_code'] == 0
         assert get_setlists_response['response']['count'] == 1
         assert len(get_setlists_response['response']['data']) == 1
         assert get_setlists_response['response']['data'][0]['showid'] == 1252698446
+        assert setlist_response['response']['data'][0]['showdate'] == '1997-12-29'
+        assert setlist_response['response']['data'][0]['rating'] == '4.5907'
+        assert setlist_response['response']['data'][0]['location'] == 'New York, NY, USA'
 
-    def test_get_latest_setlist(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/latest_setlist.json') as f:
-            latest_setlist_json = json.load(f)
-        requests_mock.post(api.base_url + "setlists/latest",
-                           json=latest_setlist_json)
-
-        latest_setlists_response = api.get_latest_setlist()
-        assert latest_setlists_response['response']['count'] == 1
-        assert len(latest_setlists_response['response']['data']) == 1
-        assert latest_setlists_response['response']['data'][0]['showid'] == 1252698446
-
-    def test_get_recent_setlists(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/recent_setlists.json') as f:
-            get_recent_setlists_json = json.load(f)
-        requests_mock.post(api.base_url + "setlists/recent",
-                           json=get_recent_setlists_json)
-
+    def test_get_recent_setlists(self):
+        api = PhishNetAPI()
         recent_setlists_response = api.get_recent_setlists()
+
+        assert recent_setlists_response['error_code'] == 0
         assert recent_setlists_response['response']['count'] == 10
         assert len(recent_setlists_response['response']['data']) == 10
-        assert recent_setlists_response['response']['data'][0]['showid'] == 1470183033
 
-    def test_get_tiph_setlist(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/tiph_setlist.json') as f:
-            get_tiph_setlist_json = json.load(f)
-        requests_mock.post(api.base_url + "setlists/tiph",
-                           json=get_tiph_setlist_json)
-
+    def test_get_tiph_setlist(self):
+        api = PhishNetAPI()
         tiph_setlist_response = api.get_tiph_setlist()
+
+        assert tiph_setlist_response['error_code'] == 0
         assert tiph_setlist_response['response']['count'] == 1
         assert len(tiph_setlist_response['response']['data']) == 1
-        assert tiph_setlist_response['response']['data'][0]['showid'] == 1253165475
 
-    def test_get_random_setlist(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/tiph_setlist.json') as f:
-            get_random_setlist_json = json.load(f)
-        requests_mock.post(api.base_url + "setlist/random",
-                           json=get_random_setlist_json)
-
+    def test_get_random_setlist(self):
+        api = PhishNetAPI()
         random_setlist_response = api.get_random_setlist()
+
+        assert random_setlist_response['error_code'] == 0
         assert random_setlist_response['response']['count'] == 1
         assert len(random_setlist_response['response']['data']) == 1
-        assert random_setlist_response['response']['data'][0]['showid'] == 1253165475
 
-    def test_get_show_links(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/get_show_links.json') as f:
-            get_show_links_json = json.load(f)
-        requests_mock.post(api.base_url + "shows/links",
-                           json=get_show_links_json)
-
+    def test_get_show_links(self):
+        api = PhishNetAPI()
         show_links_response = api.get_show_links(1394573037)
-        assert show_links_response['response']['count'] == 4
-        assert len(show_links_response['response']['data']) == 4
-        assert show_links_response['response']['data'][0]['type'] == "Photos"
 
-    def test_get_upcoming_shows(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/get_upcoming_shows.json') as f:
-            get_upcoming_shows_json = json.load(f)
-        requests_mock.post(api.base_url + "shows/upcoming",
-                           json=get_upcoming_shows_json)
+        assert show_links_response['error_code'] == 0
+        assert show_links_response['response']['count'] == len(
+            show_links_response['response']['data'])
 
+    def test_get_upcoming_shows(self):
+        api = PhishNetAPI()
         upcoming_shows_response = api.get_upcoming_shows()
-        assert upcoming_shows_response['response']['count'] == 17
-        assert len(upcoming_shows_response['response']['data']) == 17
-        assert upcoming_shows_response['response']['data'][0]['showid'] == 1470182793
 
-    def test_query_shows(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/query_shows.json') as f:
-            query_shows_json = json.load(f)
-        requests_mock.post(api.base_url + "shows/query",
-                           json=query_shows_json)
+        assert upcoming_shows_response['error_code'] == 0
+        assert upcoming_shows_response['response']['count'] == len(
+            upcoming_shows_response['response']['data'])
 
+    def test_query_shows(self):
+        api = PhishNetAPI()
         query_shows_response = api.query_shows(tourid=37)
-        assert query_shows_response['response']['count'] == 14
-        assert len(query_shows_response['response']['data']) == 14
-        assert query_shows_response['response']['data'][0]['showid'] == 1252691618
+
+        assert query_shows_response['error_code'] == 0
+        assert query_shows_response['response']['count'] == 21
+        assert len(query_shows_response['response']['data']) == 21
+        assert query_shows_response['response']['data'][0]['showid'] == 1252683880
 
         with pytest.raises(ParamValidationError):
             api.query_shows(year=1982)
@@ -650,30 +627,24 @@ class TestPhishNetAPI:
         with pytest.raises(ParamValidationError):
             api.query_shows(showdate_gt=1982)
 
-    def test_get_all_venues(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/all_venues.json') as f:
-            all_venues_json = json.load(f)
-        requests_mock.post(api.base_url + "venues/all", json=all_venues_json)
-
+    def test_get_all_venues(self):
+        api = PhishNetAPI()
         venues_response = api.get_all_venues()
-        assert venues_response['response']['count'] == 3
-        assert len(venues_response['response']['data']) == 3
+
+        assert venues_response['error_code'] == 0
+        assert venues_response['response']['count'] == len(
+            venues_response['response']['data'])
         assert venues_response['response']['data']['1']['venueid'] == 1
 
-    def test_get_venue(self, requests_mock):
-        api = PhishNetAPI('apikey123456789test1')
-        with open('tests/data/get_venue.json') as f:
-            get_venue_json = json.load(f)
-        requests_mock.post(api.base_url + "venues/get", json=get_venue_json)
-
+    def test_get_venue(self):
+        api = PhishNetAPI()
         venue_response = api.get_venue(1)
+
+        assert venue_response['error_code'] == 0
         assert venue_response['response']['count'] == 9
         assert venue_response['response']['data']['venueid'] == 1
 
     def test_get_user_details(self):
         api = PhishNetAPI()
-        response = api.get_user_details(80)
+        response = api.get_user_details(os.getenv('UID'))
         assert response['response']['count'] == 1
-        # with pytest.raises(PhishNetAPIError):
-        #    response = api.get_user_details(1)
